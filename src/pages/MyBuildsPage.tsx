@@ -65,8 +65,8 @@ export default function MyBuildsPage({ user, onBack, onLoadBuild, onNewBuild }: 
   const displayName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
 
   return (
-    <div className="h-screen w-screen bg-[#080808] font-sans antialiased overflow-y-auto momentum-scroll">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.04)_0%,transparent_60%)] pointer-events-none" />
+    <div className="h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] font-sans antialiased overflow-y-auto momentum-scroll">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.04)_0%,transparent_60%)] light:bg-none pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">

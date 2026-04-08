@@ -227,7 +227,7 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[600px] bg-[#0e0e0e] border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/50"
+              className="relative w-full max-w-[600px] bg-[#0e0e0e] light:bg-white border border-white/[0.08] light:border-gray-200 rounded-2xl shadow-2xl shadow-black/50 light:shadow-xl light:shadow-black/10"
             >
             <div className="p-6">
               <div className="flex items-start justify-between mb-1">

@@ -114,8 +114,8 @@ export default function PricingPage({ onBack, onGetStarted, user, isShopOwner, p
   const [annual, setAnnual] = useState(false);
 
   return (
-    <div className="min-h-screen w-screen bg-[#080808] font-sans antialiased overflow-y-auto momentum-scroll">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.05)_0%,transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] font-sans antialiased overflow-y-auto momentum-scroll">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.05)_0%,transparent_60%)] light:bg-none pointer-events-none" />
 
       <div className="relative z-50">
         <Header

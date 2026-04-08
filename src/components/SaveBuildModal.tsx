@@ -80,7 +80,7 @@ export default function SaveBuildModal({ isOpen, onClose, user, buildConfig, bui
               exit={{ opacity: 0, scale: 0.95, y: 30 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="relative w-full max-w-[420px] bg-[#0e0e0e] border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/50 p-6"
+              className="relative w-full max-w-[420px] bg-[#0e0e0e] light:bg-white border border-white/[0.08] light:border-gray-200 rounded-2xl shadow-2xl shadow-black/50 light:shadow-xl light:shadow-black/10 p-6"
             >
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-white">Save Build</h2>

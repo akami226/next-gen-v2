@@ -27,22 +27,22 @@
 }
 
 .light {
-  --bg-body: #f0f0f2;
-  --bg-surface: rgba(255, 255, 255, 0.8);
-  --bg-surface-hover: rgba(255, 255, 255, 0.95);
+  --bg-body: #F8F9FA;
+  --bg-surface: rgba(255, 255, 255, 0.9);
+  --bg-surface-hover: rgba(255, 255, 255, 1);
   --bg-elevated: #ffffff;
-  --bg-input: #f5f5f7;
+  --bg-input: #ffffff;
   --border-subtle: rgba(0, 0, 0, 0.06);
-  --border-default: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.12);
+  --border-default: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.15);
   --text-primary: #111111;
   --text-secondary: rgba(0, 0, 0, 0.7);
   --text-tertiary: rgba(0, 0, 0, 0.5);
   --text-muted: rgba(0, 0, 0, 0.35);
   --text-faint: rgba(0, 0, 0, 0.15);
   --dropdown-bg: #ffffff;
-  --dropdown-border: #e0e0e0;
-  --overlay-bg: rgba(0, 0, 0, 0.5);
+  --dropdown-border: #E5E7EB;
+  --overlay-bg: rgba(0, 0, 0, 0.4);
   --scrollbar-thumb: rgba(0, 0, 0, 0.12);
   --scrollbar-hover: rgba(0, 0, 0, 0.2);
   color-scheme: light;
@@ -234,7 +234,6 @@ body {
   color: white;
 }
 
-
 .light .leaflet-dark-popup .leaflet-popup-content-wrapper {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -318,239 +317,207 @@ body {
   color: #111;
 }
 
-/* Global page background overrides */
-.light [class*="bg-\[#080808\]"] { background-color: #f0f0f2 !important; }
-.light [class*="bg-\[#0e0e0e\]"] { background-color: #ffffff !important; }
-.light [class*="bg-\[#0a0a0a\]"] { background-color: #f5f5f7 !important; }
-.light [class*="bg-\[#1a1a1a\]"] { background-color: #f5f5f7 !important; }
+/* ========== LIGHT MODE: PAGE BACKGROUNDS ========== */
 
-/* Input fields in light mode */
+.light [class*="bg-\[#080808\]"] { background-color: var(--bg-body) !important; }
+.light [class*="bg-\[#0e0e0e\]"] { background-color: #ffffff !important; }
+.light [class*="bg-\[#0a0a0a\]"] { background-color: #ffffff !important; }
+.light [class*="bg-\[#0d0d0d\]"] { background-color: #ffffff !important; }
+.light [class*="bg-\[#1a1a1a\]"]:not(input):not(textarea):not(select) { background-color: #f5f5f7 !important; }
+
+/* ========== LIGHT MODE: INPUT FIELDS ========== */
+
 .light input[class*="bg-\[#1a1a1a\]"],
 .light textarea[class*="bg-\[#1a1a1a\]"],
 .light select[class*="bg-\[#1a1a1a\]"] {
-  background-color: #f5f5f7 !important;
+  background-color: #ffffff !important;
   color: #111111 !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
+  border-color: #D1D5DB !important;
 }
 
 .light input[class*="bg-\[#1a1a1a\]"]::placeholder,
 .light textarea[class*="bg-\[#1a1a1a\]"]::placeholder {
-  color: rgba(0, 0, 0, 0.3) !important;
+  color: #9CA3AF !important;
 }
 
 .light input[class*="bg-\[#1a1a1a\]"]:focus,
-.light textarea[class*="bg-\[#1a1a1a\]"]:focus {
-  border-color: rgba(255, 69, 0, 0.4) !important;
+.light textarea[class*="bg-\[#1a1a1a\]"]:focus,
+.light select[class*="bg-\[#1a1a1a\]"]:focus {
+  border-color: rgba(255, 69, 0, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.08) !important;
 }
 
-/* Dropdown menu colors for light mode */
+.light input.border-red-500\/50,
+.light input[class*="border-red-500"] {
+  border-color: #EF4444 !important;
+}
+
+/* Search inputs in admin/dashboard */
+.light input[class*="pl-10"] {
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border-color: #D1D5DB !important;
+}
+
+.light input[class*="pl-10"]::placeholder {
+  color: #9CA3AF !important;
+}
+
+.light input[class*="pl-10"]:focus {
+  border-color: rgba(255, 69, 0, 0.5) !important;
+}
+
+/* ========== LIGHT MODE: DROPDOWN MENUS ========== */
+
+.light .solid-dropdown {
+  background-color: #ffffff !important;
+  border-color: #E5E7EB !important;
+}
+
 .light .solid-dropdown a,
 .light .solid-dropdown button {
-  color: rgba(0, 0, 0, 0.6) !important;
+  color: #555555 !important;
 }
 
 .light .solid-dropdown a:hover,
 .light .solid-dropdown button:hover {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  color: rgba(0, 0, 0, 0.8) !important;
+  background-color: #F3F4F6 !important;
+  color: #111111 !important;
 }
 
 .light .solid-dropdown [class*="h-px"] {
-  background-color: rgba(0, 0, 0, 0.06) !important;
+  background-color: #E5E7EB !important;
 }
 
 /* ========== LIGHT MODE: TEXT COLOR OVERRIDES ========== */
 
 .light .text-white {
-  color: #111111;
+  color: #1a1a1a;
 }
 
-/* Keep text white on colored backgrounds */
-.light [class*="bg-[#FF4500]"].text-white,
-.light [class*="bg-[#FF5722]"].text-white,
-.light [class*="bg-[#E03E00]"].text-white,
-.light [class*="bg-[#FF4500]"] .text-white,
-.light [class*="bg-[#FF5722]"] .text-white,
-.light [class*="bg-[#E03E00]"] .text-white,
-.light [class*="bg-emerald"] .text-white {
-  color: #ffffff !important;
+.light .text-white\/90 { color: rgba(0, 0, 0, 0.85) !important; }
+.light .text-white\/80 { color: rgba(0, 0, 0, 0.75) !important; }
+.light .text-white\/70 { color: rgba(0, 0, 0, 0.65) !important; }
+.light .text-white\/60 { color: #555555 !important; }
+.light .text-white\/50 { color: #666666 !important; }
+.light .text-white\/45 { color: #777777 !important; }
+.light .text-white\/40 { color: #888888 !important; }
+.light .text-white\/35 { color: #999999 !important; }
+.light .text-white\/30 { color: #999999 !important; }
+.light .text-white\/25 { color: #AAAAAA !important; }
+.light .text-white\/20 { color: #BBBBBB !important; }
+.light .text-white\/15 { color: #CCCCCC !important; }
+.light .text-white\/10 { color: #DDDDDD !important; }
+.light .text-white\/\[0\.04\] { color: rgba(0, 0, 0, 0.06) !important; }
+
+/* Placeholder overrides */
+.light .placeholder-white\/20::placeholder,
+.light .placeholder\:text-white\/20::placeholder {
+  color: #9CA3AF !important;
 }
 
-/* Keep white on orange buttons/badges/pills */
+/* ========== LIGHT MODE: PRESERVE WHITE TEXT ON COLORED BACKGROUNDS ========== */
+
 .light [class*="bg-[#FF4500]"],
 .light [class*="bg-[#FF5722]"],
 .light [class*="bg-[#E03E00]"] {
-  color: #ffffff;
+  color: #ffffff !important;
+}
+
+.light [class*="bg-[#FF4500]"] .text-white,
+.light [class*="bg-[#FF5722]"] .text-white,
+.light [class*="bg-[#E03E00]"] .text-white,
+.light [class*="bg-emerald"] .text-white,
+.light [class*="bg-red-500"] .text-white {
+  color: #ffffff !important;
 }
 
 .light [class*="bg-[#FF4500]"] span,
-.light [class*="bg-[#FF4500]"] svg,
+.light [class*="bg-[#FF4500]"] svg {
+  color: #ffffff !important;
+}
+
 .light [class*="bg-[#FF5722]"] span,
 .light [class*="bg-[#FF5722]"] svg {
-  color: inherit;
+  color: #ffffff !important;
 }
 
-.light .text-white\/80 {
-  color: rgba(0, 0, 0, 0.75) !important;
+/* Spinner inside buttons */
+.light [class*="bg-[#FF4500]"] [class*="border-white"],
+.light [class*="bg-[#FF5722]"] [class*="border-white"] {
+  border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-.light .text-white\/70 {
-  color: rgba(0, 0, 0, 0.65) !important;
-}
-
-.light .text-white\/60 {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
-
-.light .text-white\/50 {
-  color: rgba(0, 0, 0, 0.5) !important;
-}
-
-.light .text-white\/45 {
-  color: rgba(0, 0, 0, 0.45) !important;
-}
-
-.light .text-white\/40 {
-  color: rgba(0, 0, 0, 0.4) !important;
-}
-
-.light .text-white\/35 {
-  color: rgba(0, 0, 0, 0.35) !important;
-}
-
-.light .text-white\/30 {
-  color: rgba(0, 0, 0, 0.3) !important;
-}
-
-.light .text-white\/25 {
-  color: rgba(0, 0, 0, 0.25) !important;
-}
-
-.light .text-white\/20 {
-  color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.light .text-white\/15 {
-  color: rgba(0, 0, 0, 0.15) !important;
-}
-
-.light .text-white\/10 {
-  color: rgba(0, 0, 0, 0.12) !important;
-}
-
-.light .placeholder-white\/20::placeholder {
-  color: rgba(0, 0, 0, 0.3) !important;
+.light [class*="bg-[#FF4500]"] [class*="border-t-white"],
+.light [class*="bg-[#FF5722]"] [class*="border-t-white"] {
+  border-top-color: #ffffff !important;
 }
 
 /* ========== LIGHT MODE: SURFACE / BG OVERRIDES ========== */
 
-.light .bg-white\/\[0\.03\],
-.light .bg-white\/\[0\.02\],
-.light .bg-white\/\[0\.01\] {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+.light .bg-white\/\[0\.01\],
+.light .bg-white\/\[0\.02\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.light .bg-white\/\[0\.03\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 .light .bg-white\/\[0\.04\] {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
+.light .bg-white\/\[0\.05\],
 .light .bg-white\/\[0\.06\] {
   background-color: rgba(0, 0, 0, 0.03) !important;
 }
 
-.light .bg-white\/\[0\.05\] {
-  background-color: rgba(0, 0, 0, 0.03) !important;
+.light .bg-white\/\[0\.08\] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
 .light .bg-white\/\[0\.1\] {
   background-color: rgba(0, 0, 0, 0.06) !important;
 }
 
-.light .hover\:bg-white\/\[0\.04\]:hover {
-  background-color: rgba(0, 0, 0, 0.03) !important;
-}
-
-.light .hover\:bg-white\/\[0\.06\]:hover {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-}
-
-.light .hover\:bg-white\/\[0\.1\]:hover {
+.light .bg-white\/10 {
   background-color: rgba(0, 0, 0, 0.06) !important;
 }
 
-.light .hover\:bg-white\/\[0\.08\]:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
+/* Hover backgrounds */
+.light .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0, 0, 0, 0.02) !important; }
+.light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0, 0, 0, 0.03) !important; }
+.light .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(0, 0, 0, 0.04) !important; }
+.light .hover\:bg-white\/\[0\.08\]:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
+.light .hover\:bg-white\/\[0\.1\]:hover { background-color: rgba(0, 0, 0, 0.06) !important; }
 
 /* ========== LIGHT MODE: BORDER OVERRIDES ========== */
 
-.light .border-white\/\[0\.06\] {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
+.light .border-white\/\[0\.04\] { border-color: #E5E7EB !important; }
+.light .border-white\/\[0\.06\] { border-color: #E5E7EB !important; }
+.light .border-white\/\[0\.08\] { border-color: #D1D5DB !important; }
+.light .border-white\/\[0\.1\] { border-color: #D1D5DB !important; }
+.light .border-white\/\[0\.12\] { border-color: #C4C8CF !important; }
+.light .border-white\/10 { border-color: #D1D5DB !important; }
+.light .border-white\/20 { border-color: #C4C8CF !important; }
 
-.light .border-white\/\[0\.04\] {
-  border-color: rgba(0, 0, 0, 0.06) !important;
-}
-
-.light .border-white\/\[0\.08\] {
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.light .border-white\/\[0\.1\] {
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.light .border-white\/\[0\.12\] {
-  border-color: rgba(0, 0, 0, 0.12) !important;
-}
-
-.light .border-white\/20 {
-  border-color: rgba(0, 0, 0, 0.15) !important;
-}
-
-.light .hover\:border-white\/\[0\.1\]:hover {
-  border-color: rgba(0, 0, 0, 0.12) !important;
-}
-
-.light .hover\:border-white\/\[0\.08\]:hover {
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.light .hover\:border-white\/\[0\.12\]:hover {
-  border-color: rgba(0, 0, 0, 0.14) !important;
-}
+.light .hover\:border-white\/\[0\.08\]:hover { border-color: #C4C8CF !important; }
+.light .hover\:border-white\/\[0\.1\]:hover { border-color: #B8BCC4 !important; }
+.light .hover\:border-white\/\[0\.12\]:hover { border-color: #B0B4BC !important; }
 
 /* ========== LIGHT MODE: HOVER TEXT OVERRIDES ========== */
 
-.light .hover\:text-white:hover {
-  color: #111111 !important;
-}
-
-.light .hover\:text-white\/90:hover {
-  color: rgba(0, 0, 0, 0.85) !important;
-}
-
-.light .hover\:text-white\/85:hover {
-  color: rgba(0, 0, 0, 0.8) !important;
-}
-
-.light .hover\:text-white\/80:hover {
-  color: rgba(0, 0, 0, 0.75) !important;
-}
-
-.light .hover\:text-white\/70:hover {
-  color: rgba(0, 0, 0, 0.65) !important;
-}
-
-.light .hover\:text-white\/60:hover {
-  color: rgba(0, 0, 0, 0.55) !important;
-}
-
-.light .hover\:text-white\/50:hover {
-  color: rgba(0, 0, 0, 0.45) !important;
-}
+.light .hover\:text-white:hover { color: #111111 !important; }
+.light .hover\:text-white\/90:hover { color: rgba(0, 0, 0, 0.85) !important; }
+.light .hover\:text-white\/85:hover { color: rgba(0, 0, 0, 0.8) !important; }
+.light .hover\:text-white\/80:hover { color: #333333 !important; }
+.light .hover\:text-white\/70:hover { color: #444444 !important; }
+.light .hover\:text-white\/60:hover { color: #555555 !important; }
+.light .hover\:text-white\/50:hover { color: #666666 !important; }
 
 /* ========== LIGHT MODE: ACTIVE STATE OVERRIDES ========== */
 
@@ -561,17 +528,9 @@ body {
 
 /* ========== LIGHT MODE: BACKDROP OVERRIDES ========== */
 
-.light .bg-black\/85 {
-  background-color: rgba(0, 0, 0, 0.35) !important;
-}
-
-.light .bg-black\/70 {
-  background-color: rgba(0, 0, 0, 0.3) !important;
-}
-
-.light .bg-black\/60 {
-  background-color: rgba(0, 0, 0, 0.4) !important;
-}
+.light .bg-black\/85 { background-color: rgba(0, 0, 0, 0.35) !important; }
+.light .bg-black\/70 { background-color: rgba(0, 0, 0, 0.3) !important; }
+.light .bg-black\/60 { background-color: rgba(0, 0, 0, 0.35) !important; }
 
 /* ========== LIGHT MODE: SELECT OPTION BG ========== */
 
@@ -580,29 +539,57 @@ body {
   color: #111111 !important;
 }
 
-/* ========== LIGHT MODE: GRADIENT TEXT LINE FIX ========== */
+/* ========== LIGHT MODE: GRADIENT FIXES ========== */
 
-.light .via-white\/\[0\.04\] {
-  --tw-gradient-via: rgba(0, 0, 0, 0.04) !important;
-}
-
-.light .via-\[\#FF4500\]\/20 {
-  --tw-gradient-via: rgba(255, 69, 0, 0.15) !important;
-}
-
-/* ========== LIGHT MODE: INLINE STYLE DROPDOWN FIX ========== */
-
-.light .solid-dropdown {
-  background-color: #ffffff !important;
-  border-color: #e5e5e5 !important;
-}
+.light .via-white\/\[0\.04\] { --tw-gradient-via: rgba(0, 0, 0, 0.04) !important; }
+.light .via-\[\#FF4500\]\/20 { --tw-gradient-via: rgba(255, 69, 0, 0.15) !important; }
 
 /* ========== LIGHT MODE: SHADOW ADJUSTMENTS ========== */
 
-.light .shadow-\[\#FF4500\]\/25 {
-  --tw-shadow-color: rgba(255, 69, 0, 0.15) !important;
+.light .shadow-\[\#FF4500\]\/25 { --tw-shadow-color: rgba(255, 69, 0, 0.12) !important; }
+.light .shadow-\[\#FF4500\]\/20 { --tw-shadow-color: rgba(255, 69, 0, 0.10) !important; }
+.light .shadow-\[\#FF4500\]\/30 { --tw-shadow-color: rgba(255, 69, 0, 0.12) !important; }
+.light .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important; }
+.light .shadow-black\/50 { --tw-shadow-color: rgba(0, 0, 0, 0.08) !important; }
+
+/* ========== LIGHT MODE: MODAL / ELEVATED SURFACE FIX ========== */
+
+.light [style*="background: var(--overlay-bg)"] {
+  background: rgba(0, 0, 0, 0.4) !important;
 }
 
-.light .shadow-\[\#FF4500\]\/20 {
-  --tw-shadow-color: rgba(255, 69, 0, 0.12) !important;
+/* ========== LIGHT MODE: RADIAL GRADIENT FIXES ========== */
+
+.light [class*="bg-\[radial-gradient"] {
+  background: transparent !important;
 }
+
+/* ========== LIGHT MODE: RING / OUTLINE FIXES ========== */
+
+.light .border-white\/\[0\.15\] { border-color: rgba(0, 0, 0, 0.1) !important; }
+.light .ring-white\/10 { --tw-ring-color: rgba(0, 0, 0, 0.08) !important; }
+
+/* ========== LIGHT MODE: CHART TOOLTIP FIX ========== */
+
+.light [class*="bg-\[#1a1a1a\]"][class*="border-white"] {
+  background-color: #ffffff !important;
+  border-color: #E5E7EB !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========== LIGHT MODE: FOCUS STYLES ========== */
+
+.light .focus\:border-\[\#FF4500\]\/50:focus,
+.light .focus\:border-\[\#FF4500\]\/40:focus {
+  border-color: rgba(255, 69, 0, 0.5) !important;
+}
+
+.light .focus\:shadow-\[0_0_12px_rgba\(255\,69\,0\,0\.1\)\]:focus,
+.light .focus\:shadow-\[0_0_12px_rgba\(255\,69\,0\,0\.06\)\]:focus {
+  box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.08) !important;
+}
+
+/* ========== LIGHT MODE: HOVER BORDER ON CARDS ========== */
+
+.light .hover\:border-\[\#FF4500\]\/20:hover { border-color: rgba(255, 69, 0, 0.3) !important; }
+.light .hover\:border-\[\#FF4500\]\/15:hover { border-color: rgba(255, 69, 0, 0.25) !important; }

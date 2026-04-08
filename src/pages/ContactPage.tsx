@@ -135,8 +135,8 @@ export default function ContactPage({ onBack, user, isShopOwner, profilePictureU
   }, [fullName, email, subject, message, validate]);
 
   return (
-    <div className="min-h-screen w-screen bg-[#080808] font-sans antialiased overflow-y-auto">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] font-sans antialiased overflow-y-auto">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none light:hidden">
         <div className="absolute top-[-30%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#FF4500]/[0.03] blur-[120px]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#FF4500]/[0.02] blur-[100px]" />
       </div>

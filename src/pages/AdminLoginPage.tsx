@@ -31,8 +31,8 @@ export default function AdminLoginPage({ onLogin, onBack }: AdminLoginPageProps)
   }, [email, password, onLogin]);
 
   return (
-    <div className="min-h-screen w-screen bg-[#080808] font-sans antialiased flex items-center justify-center px-6">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.04)_0%,transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] font-sans antialiased flex items-center justify-center px-6">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,69,0,0.04)_0%,transparent_60%)] light:bg-none pointer-events-none" />
 
       <button
         onClick={onBack}

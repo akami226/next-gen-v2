@@ -24,8 +24,8 @@ export default function PasswordGate({ onSuccess }: PasswordGateProps) {
   }, [password, onSuccess]);
 
   return (
-    <div className="h-screen w-screen bg-[#080808] flex flex-col items-center justify-center font-sans antialiased relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,69,0,0.04)_0%,transparent_70%)]" />
+    <div className="h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] flex flex-col items-center justify-center font-sans antialiased relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,69,0,0.04)_0%,transparent_70%)] light:bg-none" />
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#FF4500]/20 to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
 

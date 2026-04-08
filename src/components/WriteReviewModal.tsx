@@ -121,7 +121,7 @@ export default function WriteReviewModal({
             exit={{ opacity: 0, scale: 0.95, y: 30 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg bg-[#0e0e0e] border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
+            className="relative w-full max-w-lg bg-[#0e0e0e] light:bg-white border border-white/[0.08] light:border-gray-200 rounded-2xl shadow-2xl shadow-black/50 light:shadow-xl light:shadow-black/10 overflow-hidden"
           >
             <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
               <h2 className="text-lg font-bold text-white">
