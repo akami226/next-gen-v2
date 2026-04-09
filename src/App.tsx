@@ -226,7 +226,8 @@ function App() {
         }}
         onSignIn={async (email, password) => {
           const result = await signIn(email, password);
-          const { data: ownerCheck } = await (await import('./lib/supabase')).supabase
+          const { supabase } = await import('./lib/supabase');
+          const { data: ownerCheck } = await supabase
             .from('shop_owners')
             .select('id')
             .eq('user_id', result.user.id)

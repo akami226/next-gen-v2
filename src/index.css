@@ -528,9 +528,14 @@ body {
 
 /* ========== LIGHT MODE: BACKDROP OVERRIDES ========== */
 
+.light .bg-black\/90 { background-color: rgba(0, 0, 0, 0.35) !important; }
 .light .bg-black\/85 { background-color: rgba(0, 0, 0, 0.35) !important; }
-.light .bg-black\/70 { background-color: rgba(0, 0, 0, 0.3) !important; }
-.light .bg-black\/60 { background-color: rgba(0, 0, 0, 0.35) !important; }
+.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.32) !important; }
+.light .bg-black\/70 { background-color: rgba(0, 0, 0, 0.28) !important; }
+.light .bg-black\/60 { background-color: rgba(0, 0, 0, 0.25) !important; }
+.light .bg-black\/50 { background-color: rgba(0, 0, 0, 0.2) !important; }
+.light .bg-black\/40 { background-color: rgba(0, 0, 0, 0.14) !important; }
+.light .bg-black\/30 { background-color: rgba(0, 0, 0, 0.1) !important; }
 
 /* ========== LIGHT MODE: SELECT OPTION BG ========== */
 
@@ -557,6 +562,11 @@ body {
 .light [style*="background: var(--overlay-bg)"] {
   background: rgba(0, 0, 0, 0.4) !important;
 }
+
+.light [class*="bg-\[#080a10\]"] { background-color: var(--bg-body) !important; }
+.light [class*="bg-\[#0c0c0c\]"] { background-color: #ffffff !important; }
+.light [class*="bg-\[#111111\]"] { background-color: #ffffff !important; }
+.light [class*="bg-\[#121212\]"] { background-color: #f5f5f7 !important; }
 
 /* ========== LIGHT MODE: RADIAL GRADIENT FIXES ========== */
 
@@ -593,3 +603,22 @@ body {
 
 .light .hover\:border-\[\#FF4500\]\/20:hover { border-color: rgba(255, 69, 0, 0.3) !important; }
 .light .hover\:border-\[\#FF4500\]\/15:hover { border-color: rgba(255, 69, 0, 0.25) !important; }
+
+/* ========== LIGHT MODE: 3D CANVAS CONTAINER ========== */
+
+.light [class*="bg-black\/60"] { background-color: rgba(240, 240, 242, 0.7) !important; }
+.light [class*="bg-\[#080a10\]"] { background-color: #e8eaef !important; }
+
+/* ========== LIGHT MODE: NOTIFICATION BELL DROPDOWN ========== */
+
+.light .solid-dropdown .text-white\/80 { color: #1a1a1a !important; }
+.light .solid-dropdown .text-white\/30 { color: #888888 !important; }
+.light .solid-dropdown .text-white\/25 { color: #999999 !important; }
+.light .solid-dropdown .border-white\/\[0\.06\] { border-color: #E5E7EB !important; }
+.light .solid-dropdown .border-white\/\[0\.04\] { border-color: #F3F4F6 !important; }
+.light .solid-dropdown .bg-white\/\[0\.02\] { background-color: #F9FAFB !important; }
+.light .solid-dropdown .hover\:bg-white\/\[0\.04\]:hover { background-color: #F3F4F6 !important; }
+
+/* ========== LIGHT MODE: FORM SELECT ARROW ========== */
+
+.light select { color: #111111 !important; }

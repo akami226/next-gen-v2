@@ -21,7 +21,6 @@ export default function AdminSubscriptions() {
 
   const activeSubs = subs.filter((s) => s.status === 'active');
   const totalMonthly = activeSubs.reduce((s, sub) => s + sub.price, 0);
-  const latestRevenue = revenue[revenue.length - 1];
 
   const planBreakdown = useMemo(() => {
     const counts: Record<string, { count: number; revenue: number }> = {};

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Store, Car, TrendingUp, Users, BarChart3, Circle, MessageCircle, CheckCircle2 } from 'lucide-react';
-import { getAdminLeads, getAdminShops, type AdminLead } from '../../data/adminDemo';
+import { getAdminLeads, getAdminShops } from '../../data/adminDemo';
 
 const STATUS_STYLES = {
   pending: { label: 'Pending', color: '#FF4500', icon: Circle },
@@ -157,7 +157,7 @@ export default function AdminLeads() {
           <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Recent Leads</h3>
         </div>
         <div className="space-y-2">
-          {leads.slice(0, 8).map((lead, i) => {
+          {leads.slice(0, 8).map((lead) => {
             const statusCfg = STATUS_STYLES[lead.status];
             const StatusIcon = statusCfg.icon;
             return (

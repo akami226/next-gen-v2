@@ -158,16 +158,7 @@ function DesktopNav({
       <a href="#/contact" className={NAV_LINK}>Contact</a>
       <a href="#/pricing" className={NAV_LINK}>Pricing</a>
 
-      {!user && (
-        <a
-          href="#/register"
-          className="px-3 py-1.5 rounded-lg text-[10px] text-[#FF4500]/70 font-medium tracking-wider uppercase hover:text-[#FF4500] hover:bg-[#FF4500]/[0.06] transition-colors"
-        >
-          Register Shop
-        </a>
-      )}
-
-      {user && !isShopOwner && (
+      {!isShopOwner && (
         <a
           href="#/register"
           className="px-3 py-1.5 rounded-lg text-[10px] text-[#FF4500]/70 font-medium tracking-wider uppercase hover:text-[#FF4500] hover:bg-[#FF4500]/[0.06] transition-colors"
@@ -196,7 +187,7 @@ function DesktopNav({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full right-0 mt-2 w-52 rounded-xl overflow-hidden z-[9999] solid-dropdown"
+                className="absolute top-full right-0 mt-2 w-52 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
               >
                 <div className="py-1.5">
                   <div className="flex items-center gap-3 px-4 py-2.5">
@@ -307,7 +298,7 @@ function MobileMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full right-4 mt-2 w-56 rounded-xl overflow-hidden z-[9999] solid-dropdown"
+            className="absolute top-full right-4 mt-2 w-56 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
           >
             <nav className="py-2">
               {user ? (

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail,
@@ -75,7 +75,7 @@ const fade = {
   viewport: { once: true, margin: '-60px' },
 };
 
-export default function ContactPage({ onBack, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: ContactPageProps) {
+export default function ContactPage({ onBack: _onBack, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: ContactPageProps) {
   useSEO(SEO_CONFIGS.contact);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -86,6 +86,7 @@ export default function ContactPage({ onBack, user, isShopOwner, profilePictureU
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const submitLock = useRef(false);
 
   const clearError = useCallback((field: string) => {
     setFieldErrors(prev => {
@@ -110,10 +111,12 @@ export default function ContactPage({ onBack, user, isShopOwner, profilePictureU
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLock.current) return;
     const errs = validate();
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    submitLock.current = true;
     setSubmitting(true);
     setSubmitError('');
 
@@ -130,6 +133,7 @@ export default function ContactPage({ onBack, user, isShopOwner, profilePictureU
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setSubmitError(msg);
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }, [fullName, email, subject, message, validate]);

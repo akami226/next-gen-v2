@@ -109,7 +109,7 @@ const FAQ_ITEMS = [
   },
 ];
 
-export default function PricingPage({ onBack, onGetStarted, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: PricingPageProps) {
+export default function PricingPage({ onBack: _onBack, onGetStarted, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: PricingPageProps) {
   useSEO(SEO_CONFIGS.pricing);
   const [annual, setAnnual] = useState(false);
 

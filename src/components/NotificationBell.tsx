@@ -18,7 +18,7 @@ const TYPE_CONFIG: Record<NotificationType, { icon: React.ElementType; color: st
 };
 
 function timeAgo(dateStr: string): string {
-  const now = new Date('2026-04-07T17:00:00Z');
+  const now = new Date();
   const date = new Date(dateStr);
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   if (seconds < 60) return 'just now';
@@ -83,7 +83,7 @@ export default function NotificationBell({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full right-0 mt-2 w-80 sm:w-96 rounded-xl overflow-hidden z-[9999] solid-dropdown"
+            className="absolute top-full right-0 mt-2 w-80 sm:w-96 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">

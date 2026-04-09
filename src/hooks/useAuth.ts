@@ -77,10 +77,14 @@ export function useAuth() {
   }, [fetchShopOwner]);
 
   const signUp = useCallback(async (name: string, email: string, password: string) => {
+    const redirectTo = `${window.location.origin}${window.location.pathname}#/auth`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: name } },
+      options: {
+        data: { display_name: name },
+        emailRedirectTo: redirectTo,
+      },
     });
     if (error) throw error;
 
@@ -92,6 +96,7 @@ export function useAuth() {
       });
     }
 
+    // Sign out so the unverified session doesn't persist
     await supabase.auth.signOut();
 
     return data;
@@ -99,7 +104,15 @@ export function useAuth() {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        throw new Error('Please verify your email before signing in. Check your inbox for a confirmation link.');
+      }
+      if (error.message.toLowerCase().includes('invalid login credentials')) {
+        throw new Error('Incorrect email or password. Please try again.');
+      }
+      throw error;
+    }
     return data;
   }, []);
 
@@ -108,7 +121,8 @@ export function useAuth() {
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    const redirectTo = `${window.location.origin}${window.location.pathname}#/auth`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw error;
   }, []);
 

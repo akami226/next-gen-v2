@@ -13,41 +13,51 @@ import { WHEEL_OPTIONS } from '../data/wheelOptions';
 function FadeWrapper({ children, carFile }: { children: React.ReactNode; carFile: string }) {
   const groupRef = useRef<THREE.Group>(null);
   const prevFile = useRef(carFile);
+  const fadingMats = useRef<THREE.Material[]>([]);
+  const fadeDone = useRef(true);
+  const { invalidate } = useThree();
 
   useEffect(() => {
     if (prevFile.current !== carFile) {
       prevFile.current = carFile;
+      fadingMats.current = [];
+      fadeDone.current = false;
       if (groupRef.current) {
         groupRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh && child.material) {
             const mat = child.material as THREE.Material;
             mat.transparent = true;
             mat.opacity = 0;
+            fadingMats.current.push(mat);
           }
         });
       }
+      invalidate();
     }
-  }, [carFile]);
+  }, [carFile, invalidate]);
 
   useFrame((_, delta) => {
-    if (!groupRef.current) return;
-    groupRef.current.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material) {
-        const mat = child.material as THREE.Material;
-        if (mat.opacity < 1) {
-          mat.transparent = true;
-          mat.opacity = Math.min(mat.opacity + delta * 2.5, 1);
-          if (mat.opacity >= 0.99) {
-            mat.opacity = 1;
-            const phys = mat as THREE.MeshPhysicalMaterial;
-            const isNaturallyTransparent = phys.transmission > 0 || phys.emissive;
-            if (!isNaturallyTransparent && !mat.userData.keepTransparent) {
-              mat.transparent = false;
-            }
+    if (fadeDone.current || fadingMats.current.length === 0) return;
+    let allDone = true;
+    for (const mat of fadingMats.current) {
+      if (mat.opacity < 1) {
+        mat.opacity = Math.min(mat.opacity + delta * 2.5, 1);
+        if (mat.opacity >= 0.99) {
+          mat.opacity = 1;
+          const phys = mat as THREE.MeshPhysicalMaterial;
+          const isNaturallyTransparent = phys.transmission > 0 || (phys.emissiveIntensity ?? 0) > 0;
+          if (!isNaturallyTransparent && !mat.userData.keepTransparent) {
+            mat.transparent = false;
           }
+        } else {
+          allDone = false;
         }
       }
-    });
+    }
+    if (allDone) {
+      fadeDone.current = true;
+      fadingMats.current = [];
+    }
   });
 
   return <group ref={groupRef}>{children}</group>;
@@ -70,8 +80,15 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
   const currentYOffset = useRef(0);
   const glassMaterials = useRef<THREE.MeshPhysicalMaterial[]>([]);
   const rimMeshes = useRef<THREE.Mesh[]>([]);
-  const targetTintOpacity = useRef(tint.material.opacity);
-  const targetTintColor = useRef(new THREE.Color(tint.material.color));
+  const bodyMeshes = useRef<THREE.Mesh[]>([]);
+  const targetTintTransmission = useRef(Math.max(0.05, 1.0 - tint.material.opacity));
+  const targetTintColor = useRef(new THREE.Color(tint.material.opacity <= 0.12 ? '#87CEEB' : tint.material.color));
+  // Cached shared materials — one instance per wrap/rim/tint key, cloned only per-mesh
+  const wrapMatCache = useRef<{ key: string; mat: THREE.MeshPhysicalMaterial } | null>(null);
+  const rimMatCache = useRef<{ key: number; mat: THREE.MeshPhysicalMaterial } | null>(null);
+  const tintAnimating = useRef(false);
+  const suspAnimating = useRef(false);
+  const { invalidate } = useThree();
 
   if (lastClassifiedFile.current !== carFile) {
     lastClassifiedFile.current = carFile;
@@ -79,82 +96,168 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     currentYOffset.current = 0;
     glassMaterials.current = [];
     rimMeshes.current = [];
+    bodyMeshes.current = [];
+    wrapMatCache.current = null;
+    rimMatCache.current = null;
     classified.current = scanAndClassify(scene, carLabel);
   }
 
   useEffect(() => {
-    targetTintOpacity.current = tint.material.opacity;
-    targetTintColor.current = new THREE.Color(tint.material.color);
-  }, [tint]);
+    targetTintTransmission.current = Math.max(0.05, 1.0 - tint.material.opacity);
+    const isNoTint = tint.material.opacity <= 0.12;
+    targetTintColor.current = new THREE.Color(isNoTint ? '#87CEEB' : tint.material.color);
+    tintAnimating.current = true;
+    invalidate();
+  }, [tint, invalidate]);
 
+  // Full scene setup whenever car file changes — runs once per model load
   useEffect(() => {
-    if (!permanentApplied.current) {
-      permanentApplied.current = true;
-      const rims: THREE.Mesh[] = [];
-      classified.current.forEach((type, mesh) => {
-        if (type === 'body' || type === 'glass') return;
-        if (type === 'rim') {
-          rims.push(mesh);
-          return;
-        }
-        const mat = getPermanentMaterial(type);
-        if (mat) {
-          if (mat.transparent) {
-            mat.userData.keepTransparent = true;
-          }
-          mesh.material = mat;
-        }
-      });
-      rimMeshes.current = rims;
-    }
+    // Step 1: classify and apply permanent materials
+    const rims: THREE.Mesh[] = [];
+    const bodies: THREE.Mesh[] = [];
+    classified.current.forEach((type, mesh) => {
+      if (type === 'body') { bodies.push(mesh); return; }
+      if (type === 'glass') return;
+      if (type === 'rim') { rims.push(mesh); return; }
+      const mat = getPermanentMaterial(type);
+      if (mat) {
+        if (mat.transparent) mat.userData.keepTransparent = true;
+        mesh.material = mat;
+      }
+    });
+    rimMeshes.current = rims;
+    bodyMeshes.current = bodies;
+    permanentApplied.current = true;
 
-    const wheelOption = WHEEL_OPTIONS[wheelIndex];
-    const rimMat = createRimMaterialForWheel(wheelOption);
-    rimMeshes.current.forEach((mesh) => {
+    // Step 2: apply current wrap
+    wrapMatCache.current = null;
+    const wrapMat = createWrapMaterial(wrap);
+    wrapMatCache.current = { key: `${wrap.hex}-${wrap.roughness}-${wrap.metalness}-${wrap.clearcoat ?? ''}-${wrap.iridescence ?? ''}`, mat: wrapMat };
+    bodies.forEach((mesh) => {
+      mesh.material = wrapMat.clone();
+    });
+
+    // Step 3: apply current rims
+    rimMatCache.current = null;
+    const rimMat = createRimMaterialForWheel(WHEEL_OPTIONS[wheelIndex]);
+    rimMatCache.current = { key: wheelIndex, mat: rimMat };
+    rims.forEach((mesh) => {
       mesh.material = rimMat.clone();
     });
 
-    const wrapMat = createWrapMaterial(wrap);
+    // Step 4: apply current tint
+    const tintMat = createTintMaterial(tint.material);
+    tintMat.userData.keepTransparent = true;
+    const glassMats: THREE.MeshPhysicalMaterial[] = [];
     classified.current.forEach((type, mesh) => {
-      if (type === 'body') {
-        mesh.material = wrapMat.clone();
+      if (type === 'glass') {
+        const cloned = tintMat.clone();
+        cloned.userData.keepTransparent = true;
+        mesh.material = cloned;
+        glassMats.push(cloned);
       }
     });
+    tintMat.dispose();
+    glassMaterials.current = glassMats;
+    tintAnimating.current = false;
 
+    onLoaded();
+    invalidate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carFile]);
+
+  // Apply wrap material whenever wrap changes (not on initial car load)
+  useEffect(() => {
+    if (!permanentApplied.current || bodyMeshes.current.length === 0) return;
+    const wrapKey = `${wrap.hex}-${wrap.roughness}-${wrap.metalness}-${wrap.clearcoat ?? ''}-${wrap.iridescence ?? ''}`;
+    if (wrapMatCache.current?.key === wrapKey) return;
+    wrapMatCache.current?.mat.dispose();
+    const wrapMat = createWrapMaterial(wrap);
+    wrapMatCache.current = { key: wrapKey, mat: wrapMat };
+    bodyMeshes.current.forEach((mesh) => {
+      (mesh.material as THREE.Material).dispose?.();
+      mesh.material = wrapMat.clone();
+    });
+    invalidate();
+  }, [wrap, invalidate]);
+
+  // Apply rim material whenever wheelIndex changes
+  useEffect(() => {
+    if (!permanentApplied.current || rimMeshes.current.length === 0) return;
+    if (rimMatCache.current?.key === wheelIndex) return;
+    rimMatCache.current?.mat.dispose();
+    const rimMat = createRimMaterialForWheel(WHEEL_OPTIONS[wheelIndex]);
+    rimMatCache.current = { key: wheelIndex, mat: rimMat };
+    rimMeshes.current.forEach((mesh) => {
+      (mesh.material as THREE.Material).dispose?.();
+      mesh.material = rimMat.clone();
+    });
+    invalidate();
+  }, [wheelIndex, invalidate]);
+
+  // Apply tint material whenever tint changes
+  useEffect(() => {
+    if (!permanentApplied.current) return;
     const tintMat = createTintMaterial(tint.material);
     tintMat.userData.keepTransparent = true;
     const mats: THREE.MeshPhysicalMaterial[] = [];
     classified.current.forEach((type, mesh) => {
       if (type === 'glass') {
+        (mesh.material as THREE.Material).dispose?.();
         const cloned = tintMat.clone();
         cloned.userData.keepTransparent = true;
         mesh.material = cloned;
         mats.push(cloned);
       }
     });
+    tintMat.dispose();
     glassMaterials.current = mats;
+    tintAnimating.current = false;
+    invalidate();
+  }, [tint, invalidate]);
 
-    onLoaded();
-  }, [wrap, carFile, carLabel, onLoaded, tint, wheelIndex]);
+  useEffect(() => {
+    suspAnimating.current = true;
+    invalidate();
+  }, [suspensionHeight, invalidate]);
 
   useFrame(() => {
-    if (!groupRef.current) return;
+    let needsFrame = false;
 
-    const target = suspensionHeight * 0.15;
-    currentYOffset.current += (target - currentYOffset.current) * 0.06;
-    if (Math.abs(target - currentYOffset.current) < 0.0001) {
-      currentYOffset.current = target;
-    }
-    groupRef.current.position.y = currentYOffset.current;
-
-    const lerpSpeed = 0.06;
-    for (const mat of glassMaterials.current) {
-      mat.opacity += (targetTintOpacity.current - mat.opacity) * lerpSpeed;
-      if (Math.abs(targetTintOpacity.current - mat.opacity) < 0.001) {
-        mat.opacity = targetTintOpacity.current;
+    if (suspAnimating.current && groupRef.current) {
+      const target = suspensionHeight * 0.5;
+      const diff = target - currentYOffset.current;
+      if (Math.abs(diff) > 0.0001) {
+        currentYOffset.current += diff * 0.06;
+        groupRef.current.position.y = currentYOffset.current;
+        needsFrame = true;
+      } else {
+        currentYOffset.current = target;
+        groupRef.current.position.y = target;
+        suspAnimating.current = false;
       }
-      mat.color.lerp(targetTintColor.current, lerpSpeed);
     }
+
+    if (tintAnimating.current) {
+      const lerpSpeed = 0.06;
+      let tintDone = true;
+      for (const mat of glassMaterials.current) {
+        const tDiff = targetTintTransmission.current - mat.transmission;
+        if (Math.abs(tDiff) > 0.001) {
+          mat.transmission += tDiff * lerpSpeed;
+          tintDone = false;
+        } else {
+          mat.transmission = targetTintTransmission.current;
+        }
+        mat.color.lerp(targetTintColor.current, lerpSpeed);
+        mat.attenuationColor.lerp(targetTintColor.current, lerpSpeed);
+        if (!mat.color.equals(targetTintColor.current)) tintDone = false;
+      }
+      if (tintDone) tintAnimating.current = false;
+      else needsFrame = true;
+    }
+
+    if (needsFrame) invalidate();
   });
 
   return (
@@ -182,15 +285,18 @@ function GroundReflection() {
   const meshRef = useRef<THREE.Mesh>(null);
 
   return (
-    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.003, 0]}>
-      <circleGeometry args={[6, 64]} />
-      <meshStandardMaterial
-        color="#080a0e"
-        roughness={0.15}
-        metalness={0.85}
-        envMapIntensity={1.2}
+    <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]}>
+      <circleGeometry args={[7, 80]} />
+      <meshPhysicalMaterial
+        color="#060810"
+        roughness={0.08}
+        metalness={0.9}
+        envMapIntensity={1.8}
         transparent
-        opacity={0.6}
+        opacity={0.75}
+        clearcoat={1.0}
+        clearcoatRoughness={0.05}
+        reflectivity={1.0}
       />
     </mesh>
   );
@@ -214,6 +320,7 @@ function CameraControls({ isMobile, controlsRef }: {
   controlsRef: React.MutableRefObject<any>;
 }) {
   const lastTap = useRef(0);
+  const { invalidate } = useThree();
 
   useEffect(() => {
     const canvas = controlsRef.current?.domElement;
@@ -238,6 +345,7 @@ function CameraControls({ isMobile, controlsRef }: {
     controls.target.copy(DEFAULT_TARGET);
     controls.object.position.copy(DEFAULT_CAMERA_POS);
     controls.update();
+    invalidate();
   };
 
   return (
@@ -256,6 +364,7 @@ function CameraControls({ isMobile, controlsRef }: {
       target={DEFAULT_TARGET}
       makeDefault
       touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
+      onChange={() => invalidate()}
     />
   );
 }
@@ -276,13 +385,14 @@ function PostEffects({ isMobile }: { isMobile?: boolean }) {
   }
 
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={2}>
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       <N8AO
-        aoRadius={0.5}
-        intensity={1.5}
+        aoRadius={0.4}
+        intensity={1.2}
         distanceFalloff={0.5}
         halfRes
+        screenSpaceRadius
       />
       <Bloom
         intensity={0.35}
@@ -449,32 +559,38 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
           position: [DEFAULT_CAMERA_POS.x, DEFAULT_CAMERA_POS.y, DEFAULT_CAMERA_POS.z],
           fov: isMobile ? 48 : 38,
           near: 0.1,
-          far: 100,
+          far: 60,
         }}
         gl={{
           antialias: !isMobile,
           preserveDrawingBuffer: true,
           powerPreference: 'high-performance',
           alpha: false,
+          stencil: false,
+          depth: true,
         }}
         shadows
-        dpr={isMobile ? [1, 1.5] : [1, 2]}
+        dpr={isMobile ? [1, 1.2] : [1, 1.5]}
+        frameloop="demand"
         className="absolute inset-0 z-10"
         onCreated={({ gl }) => {
           if (canvasRef) canvasRef.current = gl.domElement;
+          // Limit texture anisotropy to a sensible cap
+          gl.capabilities.getMaxAnisotropy();
         }}
       >
         <SceneSetup />
         <color attach="background" args={['#080a10']} />
-        <fog attach="fog" args={['#080a10', 20, 55]} />
+        <fog attach="fog" args={['#080a10', 18, 50]} />
 
-        <ambientLight intensity={0.15} color="#c8d0e8" />
+        <ambientLight intensity={0.2} color="#d0d8f0" />
 
+        {/* Key light — main shadow caster */}
         <spotLight
-          position={[6, 10, 6]}
-          intensity={120}
-          angle={0.35}
-          penumbra={0.8}
+          position={[5, 10, 5]}
+          intensity={150}
+          angle={0.32}
+          penumbra={0.85}
           color="#ffffff"
           castShadow
           shadow-mapSize-width={isMobile ? 512 : 2048}
@@ -483,49 +599,43 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
           shadow-normalBias={0.02}
         />
 
+        {/* Fill light — opposite side, cool tone */}
         <spotLight
-          position={[-6, 7, -5]}
-          intensity={50}
-          angle={0.45}
+          position={[-7, 8, -4]}
+          intensity={60}
+          angle={0.5}
           penumbra={1}
-          color="#d0d8e8"
-          castShadow
-          shadow-mapSize-width={isMobile ? 256 : 1024}
-          shadow-mapSize-height={isMobile ? 256 : 1024}
-          shadow-bias={-0.0002}
+          color="#c8d8f8"
+          castShadow={false}
         />
 
+        {/* Rim light — behind the car, dramatic edge highlight */}
         <spotLight
-          position={[0, 3, -8]}
-          intensity={30}
-          angle={0.6}
+          position={[0, 4, -9]}
+          intensity={45}
+          angle={0.55}
           penumbra={0.9}
-          color="#e0e0ff"
+          color="#e8eeff"
         />
 
+        {/* Side accent light */}
         <spotLight
-          position={[-8, 4, 3]}
-          intensity={18}
+          position={[-9, 5, 2]}
+          intensity={22}
           angle={0.7}
           penumbra={1}
-          color="#d0d8e0"
+          color="#d8e0e8"
         />
 
-        <spotLight
-          position={[0, 12, 0]}
-          intensity={25}
-          angle={0.9}
-          penumbra={1}
-          color="#f0f0ff"
-        />
-
-        <pointLight position={[-6, 0.3, 2]} color="#1a2a50" intensity={2} distance={10} decay={2} />
-        <pointLight position={[6, 0.3, -2]} color="#301a08" intensity={1.5} distance={10} decay={2} />
+        {/* Ground-level color fill for depth */}
+        <pointLight position={[-5, 0.4, 2]} color="#0a1530" intensity={3} distance={12} decay={2} />
+        <pointLight position={[5, 0.4, -2]} color="#200a02" intensity={2} distance={12} decay={2} />
 
         <Environment
-          preset="city"
-          environmentIntensity={0.8}
-          environmentRotation={[0, Math.PI / 4, 0]}
+          preset="studio"
+          environmentIntensity={1.0}
+          environmentRotation={[0, Math.PI / 3, 0]}
+          background={false}
         />
 
         <Suspense fallback={null}>

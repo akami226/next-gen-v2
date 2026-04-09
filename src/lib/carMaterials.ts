@@ -4,18 +4,21 @@ import type { Wrap } from '../types';
 
 export function createWrapMaterial(wrap: Wrap): THREE.MeshPhysicalMaterial {
   const color = new THREE.Color(wrap.hex);
+  const isMetallic = wrap.metalness > 0.5;
+  const isMatte = wrap.roughness > 0.6;
 
   return new THREE.MeshPhysicalMaterial({
     color,
     roughness: wrap.roughness,
     metalness: wrap.metalness,
-    clearcoat: wrap.clearcoat ?? (wrap.materialType === 'physical' ? 0.8 : 0.4),
-    clearcoatRoughness: wrap.clearcoatRoughness ?? 0.05,
-    envMapIntensity: wrap.envMapIntensity ?? 1.2,
+    clearcoat: wrap.clearcoat ?? (isMetallic ? 1.0 : isMatte ? 0.2 : 0.7),
+    clearcoatRoughness: wrap.clearcoatRoughness ?? (isMatte ? 0.3 : 0.04),
+    envMapIntensity: wrap.envMapIntensity ?? (isMetallic ? 2.0 : 1.5),
     iridescence: wrap.iridescence ?? 0,
     iridescenceIOR: wrap.iridescenceIOR ?? 1.3,
-    reflectivity: wrap.reflectivity ?? 0.5,
-    sheen: wrap.roughness > 0.6 ? 0.3 : 0,
+    reflectivity: wrap.reflectivity ?? (isMetallic ? 1.0 : 0.6),
+    specularIntensity: isMetallic ? 1.0 : 0.5,
+    sheen: isMatte ? 0.4 : 0,
     sheenRoughness: 0.8,
     sheenColor: color,
   });
@@ -109,13 +112,26 @@ export function createTintMaterial(matSettings: {
   roughness: number;
   metalness: number;
 }): THREE.MeshPhysicalMaterial {
+  // Map opacity (0.1–0.85) to glass-like transmission (1.0 → 0.1)
+  const transmission = Math.max(0.05, 1.0 - matSettings.opacity);
+  const isNoTint = matSettings.opacity <= 0.12;
+
   return new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(matSettings.color),
-    roughness: matSettings.roughness,
-    metalness: matSettings.metalness,
-    transmission: 0.0,
+    color: new THREE.Color(isNoTint ? '#87CEEB' : matSettings.color),
+    roughness: 0.0,
+    metalness: 0.0,
+    transmission,
     transparent: true,
-    opacity: matSettings.opacity,
+    opacity: isNoTint ? 0.85 : 0.95,
+    thickness: 0.3,
+    ior: 1.52,
+    envMapIntensity: 1.5,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.0,
+    specularIntensity: 0.8,
+    specularColor: new THREE.Color('#ffffff'),
+    attenuationColor: new THREE.Color(isNoTint ? '#aaccff' : matSettings.color),
+    attenuationDistance: isNoTint ? 2.0 : 0.6,
   });
 }
 

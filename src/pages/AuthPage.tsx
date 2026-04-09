@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, Mail, Lock, User, ArrowRight, AlertCircle, Eye, EyeOff, ArrowLeft, Check } from 'lucide-react';
 import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
@@ -31,6 +31,7 @@ export default function AuthPage({ onSignUp, onSignIn, onResetPassword, onBack, 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [resetSent, setResetSent] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const submitting = useRef(false);
 
   const validate = useCallback(() => {
     const errs: Record<string, string> = {};
@@ -59,10 +60,12 @@ export default function AuthPage({ onSignUp, onSignIn, onResetPassword, onBack, 
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
     const errs = validate();
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
+    submitting.current = true;
     setLoading(true);
     setError('');
     try {
@@ -80,6 +83,7 @@ export default function AuthPage({ onSignUp, onSignIn, onResetPassword, onBack, 
       const msg = err instanceof Error ? err.message : 'Something went wrong';
       setError(msg);
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   }, [mode, name, email, password, validate, onSignUp, onSignIn, onResetPassword]);

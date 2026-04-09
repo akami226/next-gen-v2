@@ -28,7 +28,7 @@ const TYPE_CONFIG: Record<NotificationType, { icon: React.ElementType; color: st
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
-  const now = new Date('2026-04-07T17:00:00Z');
+  const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
@@ -180,19 +180,19 @@ export default function DashboardNotifications({
                     <p className="text-xs text-white/30 leading-relaxed">{notif.message}</p>
                     {notif.metadata && notif.type !== 'new_review' && (
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        {notif.metadata.car && (
+                        {typeof notif.metadata.car === 'string' && notif.metadata.car && (
                           <span className="text-[9px] px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 font-medium">
-                            {notif.metadata.car as string}
+                            {notif.metadata.car}
                           </span>
                         )}
-                        {notif.metadata.service && (
+                        {typeof notif.metadata.service === 'string' && notif.metadata.service && (
                           <span className="text-[9px] px-2 py-1 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 font-medium">
-                            {notif.metadata.service as string}
+                            {notif.metadata.service}
                           </span>
                         )}
                       </div>
                     )}
-                    {notif.type === 'new_review' && notif.metadata?.rating && (
+                    {notif.type === 'new_review' && typeof notif.metadata?.rating === 'number' && (
                       <div className="flex items-center gap-1 mt-2">
                         {Array.from({ length: 5 }).map((_, si) => (
                           <Star

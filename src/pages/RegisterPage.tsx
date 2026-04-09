@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, ArrowLeft, Check } from 'lucide-react';
 import { useSEO, SEO_CONFIGS } from '../hooks/useSEO';
@@ -52,6 +52,7 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const submitLock = useRef(false);
 
   const updateField = useCallback((field: string, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -73,6 +74,8 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    if (submitLock.current) return;
+    submitLock.current = true;
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -126,6 +129,7 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
       const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setSubmitError(msg);
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }, [form]);

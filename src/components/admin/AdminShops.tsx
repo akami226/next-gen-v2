@@ -157,7 +157,7 @@ export default function AdminShops() {
   );
 }
 
-function SortHeader({ label, field, currentField, asc, onToggle }: { label: string; field: SortField; currentField: SortField; asc: boolean; onToggle: (f: SortField) => void }) {
+function SortHeader({ label, field, currentField, asc: _asc, onToggle }: { label: string; field: SortField; currentField: SortField; asc: boolean; onToggle: (f: SortField) => void }) {
   const active = currentField === field;
   return (
     <button
