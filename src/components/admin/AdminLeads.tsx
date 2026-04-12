@@ -4,7 +4,7 @@ import { FileText, Store, Car, TrendingUp, Users, BarChart3, Circle, MessageCirc
 import { getAdminLeads, getAdminShops } from '../../data/adminDemo';
 
 const STATUS_STYLES = {
-  pending: { label: 'Pending', color: '#FF4500', icon: Circle },
+  pending: { label: 'Pending', color: 'var(--accent)', icon: Circle },
   contacted: { label: 'Contacted', color: '#3B82F6', icon: MessageCircle },
   completed: { label: 'Completed', color: '#10B981', icon: CheckCircle2 },
 } as const;
@@ -37,7 +37,7 @@ export default function AdminLeads() {
   }, [leads]);
 
   const statCards = [
-    { label: 'Total Leads', value: totalLeads, icon: FileText, color: '#FF4500' },
+    { label: 'Total Leads', value: totalLeads, icon: FileText, color: 'var(--accent)' },
     { label: 'Pending', value: pendingLeads, icon: Circle, color: '#F59E0B' },
     { label: 'Contacted', value: contactedLeads, icon: MessageCircle, color: '#3B82F6' },
     { label: 'Completed', value: completedLeads, icon: CheckCircle2, color: '#10B981' },
@@ -65,7 +65,10 @@ export default function AdminLeads() {
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}15`, border: `1px solid ${card.color}25` }}
+                style={{
+                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
+                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
+                }}
               >
                 <Icon className="w-4 h-4" style={{ color: card.color }} />
               </div>
@@ -174,7 +177,11 @@ export default function AdminLeads() {
                 </div>
                 <span
                   className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0"
-                  style={{ backgroundColor: `${statusCfg.color}15`, color: statusCfg.color, border: `1px solid ${statusCfg.color}25` }}
+                  style={{
+                    backgroundColor: statusCfg.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${statusCfg.color}15`,
+                    color: statusCfg.color,
+                    border: `1px solid ${statusCfg.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${statusCfg.color}25`}`,
+                  }}
                 >
                   <StatusIcon className="w-2.5 h-2.5" />
                   {statusCfg.label}

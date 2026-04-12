@@ -3,9 +3,11 @@ import { X, MapPin, Navigation, ExternalLink } from 'lucide-react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import type { Shop } from '../types';
+import { useTheme } from '../hooks/useTheme';
 
 const DARK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const DARK_TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
+const LIGHT_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
 const shopPinIcon = L.divIcon({
   className: 'leaflet-shop-marker',
@@ -23,6 +25,7 @@ interface ShopMapModalProps {
 }
 
 export default function ShopMapModal({ isOpen, onClose, shop }: ShopMapModalProps) {
+  const { isDark } = useTheme();
   const fullAddress = `${shop.address}, ${shop.city}, ${shop.state} ${shop.zip}`;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}`;
 
@@ -72,7 +75,7 @@ export default function ShopMapModal({ isOpen, onClose, shop }: ShopMapModalProp
                     zoomControl={false}
                     attributionControl={false}
                   >
-                    <TileLayer url={DARK_TILE_URL} attribution={DARK_TILE_ATTR} />
+                    <TileLayer key={isDark ? 'dark' : 'light'} url={isDark ? DARK_TILE_URL : LIGHT_TILE_URL} attribution={TILE_ATTR} />
                     <Marker position={[shop.lat, shop.lng]} icon={shopPinIcon} />
                   </MapContainer>
                 </div>

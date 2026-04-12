@@ -21,7 +21,7 @@ const FILTER_OPTIONS: { id: FilterType; label: string }[] = [
 ];
 
 const TYPE_CONFIG: Record<NotificationType, { icon: React.ElementType; color: string; label: string }> = {
-  new_lead: { icon: FileText, color: '#FF4500', label: 'New Lead' },
+  new_lead: { icon: FileText, color: 'var(--accent)', label: 'New Lead' },
   new_review: { icon: Star, color: '#F59E0B', label: 'New Review' },
   new_quote: { icon: MessageSquareQuote, color: '#3B82F6', label: 'Quote Request' },
 };
@@ -154,8 +154,8 @@ export default function DashboardNotifications({
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                     style={{
-                      backgroundColor: `${config.color}12`,
-                      border: `1px solid ${config.color}20`,
+                      backgroundColor: config.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${config.color}12`,
+                      border: `1px solid ${config.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${config.color}20`}`,
                     }}
                   >
                     <Icon className="w-4 h-4" style={{ color: config.color }} />
@@ -169,7 +169,7 @@ export default function DashboardNotifications({
                       <span
                         className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold"
                         style={{
-                          backgroundColor: `${config.color}12`,
+                          backgroundColor: config.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${config.color}12`,
                           color: config.color,
                         }}
                       >

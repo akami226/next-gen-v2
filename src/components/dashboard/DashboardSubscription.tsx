@@ -22,7 +22,7 @@ const PLANS = [
     name: 'Pro',
     price: 49,
     icon: Crown,
-    color: '#FF4500',
+    color: 'var(--accent)',
     popular: true,
     features: [
       'Everything in Starter',
@@ -125,7 +125,10 @@ export default function DashboardSubscription() {
                 )}
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${plan.color}15`, border: `1px solid ${plan.color}25` }}
+                  style={{
+                    backgroundColor: plan.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${plan.color}15`,
+                    border: `1px solid ${plan.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${plan.color}25`}`,
+                  }}
                 >
                   <Icon className="w-5 h-5" style={{ color: plan.color }} />
                 </div>

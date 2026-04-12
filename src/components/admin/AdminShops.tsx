@@ -15,7 +15,7 @@ const STATUS_STYLES = {
 
 const PLAN_STYLES = {
   starter: { label: 'Starter', color: '#3B82F6' },
-  professional: { label: 'Professional', color: '#FF4500' },
+  professional: { label: 'Professional', color: 'var(--accent)' },
   elite: { label: 'Elite', color: '#10B981' },
 } as const;
 
@@ -217,7 +217,11 @@ function ShopRow({
         <div className="hidden sm:block">
           <span
             className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider"
-            style={{ backgroundColor: `${planCfg.color}15`, color: planCfg.color, border: `1px solid ${planCfg.color}25` }}
+            style={{
+              backgroundColor: planCfg.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${planCfg.color}15`,
+              color: planCfg.color,
+              border: `1px solid ${planCfg.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${planCfg.color}25`}`,
+            }}
           >
             {planCfg.label}
           </span>

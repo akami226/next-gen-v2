@@ -14,7 +14,7 @@ export default function DashboardOverview({ shop, onPreviewShop }: DashboardOver
   const metrics = useMemo(() => getDemoMetrics(), []);
 
   const cards = [
-    { label: 'Leads This Month', value: stats.leadsThisMonth, icon: TrendingUp, color: '#FF4500' },
+    { label: 'Leads This Month', value: stats.leadsThisMonth, icon: TrendingUp, color: 'var(--accent)' },
     { label: 'Profile Views', value: stats.viewsThisMonth, icon: Eye, color: '#3B82F6' },
     { label: 'Avg Rating', value: shop.rating.toFixed(1), icon: Star, color: '#F59E0B' },
     { label: 'Total Reviews', value: shop.reviews, icon: MessageSquareQuote, color: '#10B981' },
@@ -68,7 +68,10 @@ export default function DashboardOverview({ shop, onPreviewShop }: DashboardOver
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}15`, border: `1px solid ${card.color}25` }}
+                style={{
+                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
+                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
+                }}
               >
                 <Icon className="w-4 h-4" style={{ color: card.color }} />
               </div>
@@ -111,7 +114,12 @@ function MetricsChart({ metrics }: { metrics: DailyMetric[] }) {
 
   return (
     <div className="relative">
-      <div className="flex items-end gap-[3px] h-40">
+      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none h-32">
+        {[0.25, 0.5, 0.75, 1.0].map((pct) => (
+          <div key={pct} className="w-full border-b border-white/[0.04]" />
+        ))}
+      </div>
+      <div className="flex items-end gap-[3px] h-40 relative">
         {metrics.map((m, i) => {
           const viewH = (m.views / chartMax) * 100;
           const leadH = (m.leads / chartMax) * 100 * 5;
@@ -119,20 +127,32 @@ function MetricsChart({ metrics }: { metrics: DailyMetric[] }) {
           return (
             <div key={m.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
               <div className="absolute bottom-full mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <div className="bg-[#1a1a1a] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[10px] whitespace-nowrap shadow-lg">
-                  <p className="text-white/60 font-medium mb-0.5">{m.label}</p>
-                  <p className="text-[#3B82F6]">{m.views} views</p>
-                  <p className="text-[#FF4500]">{m.leads} leads</p>
+                <div className="bg-[#1a1a1a] border border-white/[0.1] rounded-lg px-3 py-2 text-[10px] whitespace-nowrap shadow-xl">
+                  <p className="text-white/60 font-medium mb-1">{m.label}</p>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
+                    <span className="text-[#3B82F6] font-semibold">{m.views} views</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" />
+                    <span className="text-[#FF4500] font-semibold">{m.leads} leads</span>
+                  </div>
                 </div>
               </div>
               <div className="w-full flex gap-[1px] items-end h-32">
-                <div
-                  className="flex-1 rounded-t bg-[#3B82F6]/40 hover:bg-[#3B82F6]/60 transition-colors"
-                  style={{ height: `${viewH}%`, minHeight: 2 }}
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: `${viewH}%` }}
+                  transition={{ delay: 0.05 + i * 0.015, duration: 0.4, ease: 'easeOut' }}
+                  className="flex-1 rounded-t-[4px] bg-[#3B82F6]/40 group-hover:bg-[#3B82F6]/70 transition-colors duration-150"
+                  style={{ minHeight: 2 }}
                 />
-                <div
-                  className="flex-1 rounded-t bg-[#FF4500]/50 hover:bg-[#FF4500]/70 transition-colors"
-                  style={{ height: `${leadH}%`, minHeight: 2 }}
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: `${leadH}%` }}
+                  transition={{ delay: 0.08 + i * 0.015, duration: 0.4, ease: 'easeOut' }}
+                  className="flex-1 rounded-t-[4px] bg-[#FF4500]/40 group-hover:bg-[#FF4500]/70 transition-colors duration-150"
+                  style={{ minHeight: 2 }}
                 />
               </div>
               {showLabel && (

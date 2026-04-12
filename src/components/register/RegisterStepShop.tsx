@@ -143,7 +143,7 @@ export default function RegisterStepShop({ form, errors, setErrors, updateField,
           <label className="block text-xs text-white/40 mb-1.5">Shop Description <span className="text-[#FF4500]/60">*</span> <span className="text-white/15">({form.shopDescription.length}/300)</span></label>
           <textarea value={form.shopDescription} onChange={(e) => { if (e.target.value.length <= 300) updateField('shopDescription', e.target.value); }} placeholder="Tell customers what makes your shop unique..." rows={3} className={`${inputClass('shopDescription')} resize-none`} />
           <div className="mt-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.min((form.shopDescription.length / 300) * 100, 100)}%`, backgroundColor: form.shopDescription.length >= 300 ? '#ef4444' : form.shopDescription.length >= 240 ? '#f59e0b' : '#FF4500' }} />
+            <div className="h-full rounded-full transition-all duration-300" style={{ width: `${Math.min((form.shopDescription.length / 300) * 100, 100)}%`, backgroundColor: form.shopDescription.length >= 300 ? '#ef4444' : form.shopDescription.length >= 240 ? '#f59e0b' : 'var(--accent)' }} />
           </div>
           {errors.shopDescription && <p className="text-[10px] text-red-400 mt-1">{errors.shopDescription}</p>}
         </div>

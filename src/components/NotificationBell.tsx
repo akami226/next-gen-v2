@@ -12,7 +12,7 @@ interface NotificationBellProps {
 }
 
 const TYPE_CONFIG: Record<NotificationType, { icon: React.ElementType; color: string; bg: string }> = {
-  new_lead: { icon: FileText, color: '#FF4500', bg: '#FF4500' },
+  new_lead: { icon: FileText, color: 'var(--accent)', bg: 'var(--accent)' },
   new_review: { icon: Star, color: '#F59E0B', bg: '#F59E0B' },
   new_quote: { icon: MessageSquareQuote, color: '#3B82F6', bg: '#3B82F6' },
 };
@@ -89,7 +89,7 @@ export default function NotificationBell({
               <div className="flex items-center gap-2">
                 <h3 className="text-xs font-bold text-white/80">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-md text-[9px] text-[#FF4500] font-bold" style={{ background: 'rgba(255,69,0,0.12)' }}>
+                  <span className="px-1.5 py-0.5 rounded-md text-[9px] text-[#FF4500] font-bold" style={{ background: `rgba(var(--accent-rgb),0.12)` }}>
                     {unreadCount} new
                   </span>
                 )}
@@ -133,8 +133,8 @@ export default function NotificationBell({
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
                         style={{
-                          backgroundColor: `${config.bg}15`,
-                          border: `1px solid ${config.bg}25`,
+                          backgroundColor: config.bg.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${config.bg}15`,
+                          border: `1px solid ${config.bg.startsWith('var(') ? 'var(--accent-border-subtle)' : `${config.bg}25`}`,
                         }}
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />

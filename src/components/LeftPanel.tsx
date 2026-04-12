@@ -240,7 +240,7 @@ export default function LeftPanel({
                 onChange={(e) => onSuspensionChange(parseFloat(e.target.value))}
                 className="w-full h-2 rounded-full appearance-none cursor-pointer suspension-slider relative z-10"
                 style={{
-                  background: `linear-gradient(to right, #FF4500 0%, #FF4500 ${fillPercent}%, var(--bg-input) ${fillPercent}%, var(--bg-input) 100%)`,
+                  background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${fillPercent}%, var(--bg-input) ${fillPercent}%, var(--bg-input) 100%)`,
                 }}
               />
             </div>

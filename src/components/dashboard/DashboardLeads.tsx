@@ -15,13 +15,15 @@ import {
   Disc3,
   Sun,
   Volume2,
+  Map,
 } from 'lucide-react';
 import { getDemoLeads, type DemoLead } from '../../data/dashboardDemo';
+import LeadMapPreview from './LeadMapPreview';
 
 type StatusFilter = 'all' | 'pending' | 'contacted' | 'completed';
 
 const STATUS_CONFIG = {
-  pending: { label: 'New', color: '#FF4500', bg: '#FF4500', icon: Circle },
+  pending: { label: 'New', color: 'var(--accent)', bg: 'var(--accent)', icon: Circle },
   contacted: { label: 'Contacted', color: '#3B82F6', bg: '#3B82F6', icon: MessageCircle },
   completed: { label: 'Completed', color: '#10B981', bg: '#10B981', icon: CheckCircle2 },
 } as const;
@@ -30,6 +32,7 @@ export default function DashboardLeads() {
   const [leads, setLeads] = useState<DemoLead[]>(() => getDemoLeads());
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (filter === 'all') return leads;
@@ -94,6 +97,8 @@ export default function DashboardLeads() {
               expanded={expandedId === lead.id}
               onToggle={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
               onUpdateStatus={updateStatus}
+              showMap={mapPreviewId === lead.id}
+              onToggleMap={() => setMapPreviewId(mapPreviewId === lead.id ? null : lead.id)}
             />
           ))
         )}
@@ -108,12 +113,16 @@ function LeadCard({
   expanded,
   onToggle,
   onUpdateStatus,
+  showMap,
+  onToggleMap,
 }: {
   lead: DemoLead;
   index: number;
   expanded: boolean;
   onToggle: () => void;
   onUpdateStatus: (id: string, status: DemoLead['status']) => void;
+  showMap: boolean;
+  onToggleMap: () => void;
 }) {
   const status = STATUS_CONFIG[lead.status];
   const StatusIcon = status.icon;
@@ -151,9 +160,9 @@ function LeadCard({
             <span
               className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0"
               style={{
-                backgroundColor: `${status.bg}15`,
+                backgroundColor: status.bg.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${status.bg}15`,
                 color: status.color,
-                border: `1px solid ${status.bg}25`,
+                border: `1px solid ${status.bg.startsWith('var(') ? 'var(--accent-border-subtle)' : `${status.bg}25`}`,
               }}
             >
               <StatusIcon className="w-2.5 h-2.5" />
@@ -224,23 +233,47 @@ function LeadCard({
                           : 'opacity-40 hover:opacity-70'
                       }`}
                       style={{
-                        backgroundColor: `${cfg.bg}${active ? '20' : '10'}`,
+                        backgroundColor: cfg.bg.startsWith('var(') ? `rgba(var(--accent-rgb),${active ? 0.12 : 0.06})` : `${cfg.bg}${active ? '20' : '10'}`,
                         color: cfg.color,
-                        border: `1px solid ${cfg.bg}${active ? '30' : '15'}`,
+                        border: `1px solid ${cfg.bg.startsWith('var(') ? `rgba(var(--accent-rgb),${active ? 0.18 : 0.08})` : `${cfg.bg}${active ? '30' : '15'}`}`,
                       }}
                     >
                       {cfg.label}
                     </button>
                   );
                 })}
+                <button
+                  onClick={onToggleMap}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-colors flex items-center gap-1.5 ml-auto ${
+                    showMap
+                      ? 'bg-[#FF4500]/10 border border-[#FF4500]/20 text-[#FF4500]'
+                      : 'bg-white/[0.06] border border-white/[0.08] text-white/50 hover:text-white/80 hover:bg-white/[0.1]'
+                  }`}
+                  aria-label="Preview customer location on map"
+                >
+                  <Map className="w-3 h-3" />
+                  {showMap ? 'Hide Map' : 'Preview on Map'}
+                </button>
                 <a
                   href={`mailto:${lead.customer_email}?subject=Re: Your Quote Request&body=Hi ${lead.customer_name.split(' ')[0]},%0D%0A%0D%0AThank you for your interest in our services.`}
-                  className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-[10px] font-semibold text-white/50 hover:text-white/80 hover:bg-white/[0.1] transition-colors flex items-center gap-1.5 ml-auto"
+                  className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-[10px] font-semibold text-white/50 hover:text-white/80 hover:bg-white/[0.1] transition-colors flex items-center gap-1.5"
                 >
                   <Mail className="w-3 h-3" />
                   Reply via Email
                 </a>
               </div>
+
+              <AnimatePresence>
+                {showMap && (
+                  <LeadMapPreview
+                    lat={lead.customer_lat}
+                    lng={lead.customer_lng}
+                    label={lead.customer_name}
+                    city={lead.customer_city}
+                    onClose={onToggleMap}
+                  />
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

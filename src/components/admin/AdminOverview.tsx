@@ -9,7 +9,7 @@ export default function AdminOverview() {
   const signups = useMemo(() => getWeeklySignups(), []);
 
   const cards = [
-    { label: 'Total Shops', value: stats.totalShops, icon: Store, color: '#FF4500', change: '+3 this month' },
+    { label: 'Total Shops', value: stats.totalShops, icon: Store, color: 'var(--accent)', change: '+3 this month' },
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: '#3B82F6', change: '+8 this month' },
     { label: 'Leads This Month', value: stats.totalLeads, icon: FileText, color: '#10B981', change: '+12% vs last' },
     { label: 'Monthly Revenue', value: `$${stats.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: '#F59E0B', change: '+18% vs last' },
@@ -37,7 +37,10 @@ export default function AdminOverview() {
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}15`, border: `1px solid ${card.color}25` }}
+                style={{
+                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
+                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
+                }}
               >
                 <Icon className="w-4 h-4" style={{ color: card.color }} />
               </div>
@@ -120,14 +123,17 @@ export default function AdminOverview() {
           {[
             { icon: Clock, label: 'Pending Approvals', count: stats.pendingApprovals, color: '#EF4444' },
             { icon: TrendingUp, label: 'Active Subscriptions', count: stats.activeSubscriptions, color: '#10B981' },
-            { icon: CheckCircle2, label: 'Total Shops', count: stats.totalShops, color: '#FF4500' },
+            { icon: CheckCircle2, label: 'Total Shops', count: stats.totalShops, color: 'var(--accent)' },
           ].map((action) => {
             const Icon = action.icon;
             return (
               <div key={action.label} className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${action.color}10`, border: `1px solid ${action.color}20` }}
+                  style={{
+                    backgroundColor: action.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${action.color}10`,
+                    border: `1px solid ${action.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${action.color}20`}`,
+                  }}
                 >
                   <Icon className="w-5 h-5" style={{ color: action.color }} />
                 </div>

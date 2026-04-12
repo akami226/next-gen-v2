@@ -3,9 +3,11 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { MapPin } from 'lucide-react';
 import type { Shop } from '../types';
+import { useTheme } from '../hooks/useTheme';
 
 const DARK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const DARK_TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
+const LIGHT_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>';
 
 function createShopIcon(isSelected: boolean) {
   return L.divIcon({
@@ -22,6 +24,22 @@ function createShopIcon(isSelected: boolean) {
 interface MapControllerProps {
   shops: Shop[];
   focusCenter?: { lat: number; lng: number } | null;
+}
+
+function ThemeTileSwapper({ isDark }: { isDark: boolean }) {
+  const map = useMap();
+  const layerRef = useRef<L.TileLayer | null>(null);
+
+  useEffect(() => {
+    if (layerRef.current) {
+      map.removeLayer(layerRef.current);
+    }
+    const url = isDark ? DARK_TILE_URL : LIGHT_TILE_URL;
+    layerRef.current = L.tileLayer(url, { attribution: TILE_ATTR });
+    layerRef.current.addTo(map);
+  }, [isDark, map]);
+
+  return null;
 }
 
 function MapController({ shops, focusCenter }: MapControllerProps) {
@@ -63,6 +81,7 @@ interface ShopMapProps {
 }
 
 export default function ShopMap({ shops, selectedShopId, onMarkerClick, onNavigateShop, focusCenter }: ShopMapProps) {
+  const { isDark } = useTheme();
   const center: [number, number] = shops.length > 0
     ? [shops.reduce((s, sh) => s + sh.lat, 0) / shops.length, shops.reduce((s, sh) => s + sh.lng, 0) / shops.length]
     : focusCenter ? [focusCenter.lat, focusCenter.lng] : [34.0522, -118.2437];
@@ -76,7 +95,8 @@ export default function ShopMap({ shops, selectedShopId, onMarkerClick, onNaviga
         zoomControl={false}
         attributionControl={false}
       >
-        <TileLayer url={DARK_TILE_URL} attribution={DARK_TILE_ATTR} />
+        <TileLayer url={isDark ? DARK_TILE_URL : LIGHT_TILE_URL} attribution={TILE_ATTR} />
+        <ThemeTileSwapper isDark={isDark} />
         <MapController shops={shops} focusCenter={focusCenter} />
         {shops.map((shop) => (
           <Marker
@@ -92,10 +112,10 @@ export default function ShopMap({ shops, selectedShopId, onMarkerClick, onNaviga
           >
             <Popup className="leaflet-dark-popup">
               <div className="flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-[#FF4500]" />
-                <span className="text-xs font-semibold text-white">{shop.name}</span>
+                <MapPin className="w-3 h-3 map-popup-accent" />
+                <span className="text-xs font-semibold map-popup-name">{shop.name}</span>
               </div>
-              <p className="text-[10px] text-white/50 mt-0.5">{shop.city}, {shop.state}</p>
+              <p className="text-[10px] map-popup-location mt-0.5">{shop.city}, {shop.state}</p>
             </Popup>
           </Marker>
         ))}

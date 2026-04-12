@@ -6,6 +6,8 @@ export interface DemoLead {
   customer_email: string;
   customer_phone: string;
   customer_city: string;
+  customer_lat: number;
+  customer_lng: number;
   contact_time: string;
   notes: string;
   car_config: {
@@ -45,6 +47,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'marcus.chen@email.com',
       customer_phone: '(310) 555-0142',
       customer_city: 'Los Angeles, CA',
+      customer_lat: 34.0522,
+      customer_lng: -118.2437,
       contact_time: 'Morning',
       notes: 'Looking for a full matte black wrap on my 2024 M4. Want to discuss ceramic coating options too.',
       car_config: { car: 'BMW M4 G82', wrap: '3M 1080 Matte Black', wheels: 'BBS LM Forged', tint: 'XPEL XR Plus 35% VLT', exhaust: 'Akrapovic Evolution' },
@@ -57,6 +61,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'sarah.m@email.com',
       customer_phone: '(818) 555-0278',
       customer_city: 'Burbank, CA',
+      customer_lat: 34.1808,
+      customer_lng: -118.3090,
       contact_time: 'Afternoon',
       notes: 'Need quotes for wheel installation and alignment. Already have the wheels.',
       car_config: { car: 'BMW M4 F82', wrap: 'Avery SW900 Satin Dark Grey', wheels: 'Vossen HF-5', tint: 'LLumar CTX 50% VLT', exhaust: 'Borla S-Type' },
@@ -69,6 +75,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'dpark@email.com',
       customer_phone: '(213) 555-0199',
       customer_city: 'Pasadena, CA',
+      customer_lat: 34.1478,
+      customer_lng: -118.1445,
       contact_time: 'Anytime',
       notes: 'Full build: wrap, wheels, tint, exhaust. Budget around $15k. Want to see the car in person first.',
       car_config: { car: 'BMW M6 Gran Coupe', wrap: '3M 1080 Gloss Hot Rod Red', wheels: 'HRE P101', tint: '3M Crystalline 5% VLT', exhaust: 'Akrapovic Slip-On' },
@@ -81,6 +89,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'jess.r@email.com',
       customer_phone: '(626) 555-0334',
       customer_city: 'Glendale, CA',
+      customer_lat: 34.1425,
+      customer_lng: -118.2551,
       contact_time: 'Evening',
       notes: 'Interested in ceramic tint for all windows including windshield. How long does it take?',
       car_config: { car: 'BMW M4 G82', wrap: 'HEXIS Brushed Titanium', wheels: 'Enkei RPF1', tint: 'XPEL XR Plus 35% VLT', exhaust: 'Akrapovic Evolution' },
@@ -93,6 +103,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'ryan.oc@email.com',
       customer_phone: '(323) 555-0556',
       customer_city: 'Santa Monica, CA',
+      customer_lat: 34.0195,
+      customer_lng: -118.4912,
       contact_time: 'Morning',
       notes: 'Chrome delete + tint package. Also want to discuss PPF for the front end.',
       car_config: { car: 'BMW M4 F82', wrap: '3M Carbon Fiber Black', wheels: 'Work Emotion CR Kiwami', tint: 'LLumar CTX 50% VLT', exhaust: 'Eisenmann Race' },
@@ -105,6 +117,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'nina.p@email.com',
       customer_phone: '(562) 555-0187',
       customer_city: 'Long Beach, CA',
+      customer_lat: 33.7701,
+      customer_lng: -118.1937,
       contact_time: 'Afternoon',
       notes: 'Want the Akrapovic exhaust installed. Already purchased it. Need a quote for labor only.',
       car_config: { car: 'BMW M4 G82', wrap: '3M 1080 Matte Black', wheels: 'BBS LM Forged', tint: '3M Crystalline 5% VLT', exhaust: 'Akrapovic Evolution' },
@@ -117,6 +131,8 @@ export function getDemoLeads(): DemoLead[] {
       customer_email: 'carlos.m@email.com',
       customer_phone: '(747) 555-0421',
       customer_city: 'Woodland Hills, CA',
+      customer_lat: 34.1684,
+      customer_lng: -118.6059,
       contact_time: 'Anytime',
       notes: 'Full color change wrap. Want to see color samples in person. Satin or matte finish.',
       car_config: { car: 'BMW M6 Gran Coupe', wrap: 'Avery SW900 Satin Dark Grey', wheels: 'Vossen HF-5', tint: 'XPEL XR Plus 35% VLT', exhaust: 'Akrapovic Slip-On' },

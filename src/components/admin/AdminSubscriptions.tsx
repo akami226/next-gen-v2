@@ -11,7 +11,7 @@ const STATUS_STYLES = {
 
 const PLAN_STYLES = {
   starter: { label: 'Starter', color: '#3B82F6' },
-  professional: { label: 'Professional', color: '#FF4500' },
+  professional: { label: 'Professional', color: 'var(--accent)' },
   elite: { label: 'Elite', color: '#10B981' },
 } as const;
 
@@ -59,7 +59,10 @@ export default function AdminSubscriptions() {
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{ backgroundColor: `${card.color}15`, border: `1px solid ${card.color}25` }}
+                style={{
+                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
+                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
+                }}
               >
                 <Icon className="w-4 h-4" style={{ color: card.color }} />
               </div>
@@ -177,14 +180,22 @@ function SubscriptionRow({ sub, index }: { sub: AdminSubscription; index: number
       </div>
       <span
         className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 hidden sm:block"
-        style={{ backgroundColor: `${planCfg.color}15`, color: planCfg.color, border: `1px solid ${planCfg.color}25` }}
+        style={{
+          backgroundColor: planCfg.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${planCfg.color}15`,
+          color: planCfg.color,
+          border: `1px solid ${planCfg.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${planCfg.color}25`}`,
+        }}
       >
         {planCfg.label}
       </span>
       <span className="text-xs text-white/50 font-bold shrink-0">${sub.price}/mo</span>
       <span
         className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0"
-        style={{ backgroundColor: `${statusCfg.color}15`, color: statusCfg.color, border: `1px solid ${statusCfg.color}25` }}
+        style={{
+          backgroundColor: statusCfg.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${statusCfg.color}15`,
+          color: statusCfg.color,
+          border: `1px solid ${statusCfg.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${statusCfg.color}25`}`,
+        }}
       >
         <StatusIcon className="w-2.5 h-2.5" />
         {statusCfg.label}
