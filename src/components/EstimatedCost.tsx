@@ -49,7 +49,7 @@ export default function EstimatedCost({ breakdown }: EstimatedCostProps) {
   if (!hasPrice) return null;
 
   return (
-    <div className="bg-white/[0.04] dark:bg-white/[0.04] light:bg-black/[0.04] backdrop-blur-md border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.08] rounded-2xl">
+    <div className="bg-[#111111] dark:bg-[#111111] light:bg-[#e8e8ea] backdrop-blur-md border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.08] rounded-2xl">
       <button
         onClick={() => setExpanded((p) => !p)}
         className="w-full flex items-center justify-between px-4 py-3 gap-3"

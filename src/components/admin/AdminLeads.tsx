@@ -1,197 +1,214 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Store, Car, TrendingUp, Users, BarChart3, Circle, MessageCircle, CheckCircle2 } from 'lucide-react';
-import { getAdminLeads, getAdminShops } from '../../data/adminDemo';
+import {
+  Search,
+  Download,
+  ChevronDown,
+  Mail,
+  Phone,
+  Car,
+  CheckCircle2,
+} from 'lucide-react';
+import { getAdminLeads, type AdminLead } from '../../data/adminDemo';
 
-const STATUS_STYLES = {
-  pending: { label: 'Pending', color: 'var(--accent)', icon: Circle },
-  contacted: { label: 'Contacted', color: '#3B82F6', icon: MessageCircle },
-  completed: { label: 'Completed', color: '#10B981', icon: CheckCircle2 },
-} as const;
+type StatusFilter = 'all' | 'new' | 'contacted' | 'qualified' | 'closed';
+
+const STATUS_CONFIG: Record<AdminLead['status'], { label: string; bg: string; text: string; border: string }> = {
+  new: { label: 'New', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  contacted: { label: 'Contacted', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+  qualified: { label: 'Qualified', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  closed: { label: 'Closed', bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' },
+};
 
 export default function AdminLeads() {
-  const leads = useMemo(() => getAdminLeads(), []);
-  const shops = useMemo(() => getAdminShops(), []);
+  const allLeads = useMemo(() => getAdminLeads(), []);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
-  const totalLeads = leads.length;
-  const pendingLeads = leads.filter((l) => l.status === 'pending').length;
-  const contactedLeads = leads.filter((l) => l.status === 'contacted').length;
-  const completedLeads = leads.filter((l) => l.status === 'completed').length;
+  const filtered = useMemo(() => {
+    let result = allLeads;
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (l) =>
+          l.customer.toLowerCase().includes(q) ||
+          l.shopName.toLowerCase().includes(q) ||
+          l.email.toLowerCase().includes(q)
+      );
+    }
+    if (statusFilter !== 'all') result = result.filter((l) => l.status === statusFilter);
+    return result;
+  }, [allLeads, search, statusFilter]);
 
-  const shopLeadCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    leads.forEach((l) => {
-      counts[l.shopName] = (counts[l.shopName] || 0) + 1;
-    });
-    return Object.entries(counts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 6);
-  }, [leads]);
+  const totalValue = filtered.reduce((sum, l) => sum + l.configuredValue, 0);
 
-  const carPopularity = useMemo(() => {
-    const counts: Record<string, number> = {};
-    leads.forEach((l) => {
-      counts[l.car] = (counts[l.car] || 0) + 1;
-    });
-    return Object.entries(counts).sort(([, a], [, b]) => b - a);
-  }, [leads]);
-
-  const statCards = [
-    { label: 'Total Leads', value: totalLeads, icon: FileText, color: 'var(--accent)' },
-    { label: 'Pending', value: pendingLeads, icon: Circle, color: '#F59E0B' },
-    { label: 'Contacted', value: contactedLeads, icon: MessageCircle, color: '#3B82F6' },
-    { label: 'Completed', value: completedLeads, icon: CheckCircle2, color: '#10B981' },
-    { label: 'Active Shops', value: shops.filter((s) => s.status === 'active').length, icon: Store, color: '#06B6D4' },
-    { label: 'Avg Leads/Shop', value: (totalLeads / shops.length).toFixed(1), icon: TrendingUp, color: '#8B5CF6' },
-  ];
+  const handleExport = () => {
+    setExportSuccess(true);
+    setTimeout(() => setExportSuccess(false), 2500);
+  };
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <h2 className="text-xl font-bold text-white">Leads & Analytics</h2>
-        <p className="text-sm text-white/40 mt-1">Platform-wide lead generation and user activity insights.</p>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Lead Management</h2>
+        <p className="text-sm text-gray-500 mt-1">Manage and track all incoming leads across the platform.</p>
       </motion.div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        {statCards.map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.04 }}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4"
-            >
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{
-                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
-                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
-                }}
-              >
-                <Icon className="w-4 h-4" style={{ color: card.color }} />
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6"
+      >
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search leads by name, shop, or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4500]/20 focus:border-[#FF4500]/40 transition-all"
+          />
+        </div>
+
+        <div className="relative">
+          <button
+            onClick={() => setFilterOpen(!filterOpen)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full sm:w-auto"
+          >
+            <span className="text-gray-400 text-xs">Status:</span>
+            <span className="font-medium capitalize">{statusFilter === 'all' ? 'All Statuses' : statusFilter}</span>
+            <ChevronDown className="w-4 h-4 text-gray-400 ml-1" />
+          </button>
+          {filterOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+              <div className="absolute top-full mt-1 right-0 z-20 w-48 bg-white rounded-xl border border-gray-200 shadow-xl py-1">
+                {(['all', 'new', 'contacted', 'qualified', 'closed'] as StatusFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setStatusFilter(s);
+                      setFilterOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                      statusFilter === s ? 'text-[#FF4500] font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    {s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
               </div>
-              <p className="text-2xl font-black text-white tracking-tight">{card.value}</p>
-              <p className="text-[10px] text-white/30 uppercase tracking-wider mt-1">{card.label}</p>
-            </motion.div>
-          );
-        })}
-      </div>
+            </>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
+        <button
+          onClick={handleExport}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
         >
-          <div className="flex items-center gap-2 mb-5">
-            <Store className="w-4 h-4 text-[#FF4500]/50" />
-            <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Top Shops by Leads</h3>
-          </div>
-          <div className="space-y-3">
-            {shopLeadCounts.map(([name, count], i) => {
-              const maxCount = shopLeadCounts[0][1];
-              const pct = (count / maxCount) * 100;
-              return (
-                <div key={name}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-white/50 font-medium truncate flex-1">{name}</span>
-                    <span className="text-xs text-[#FF4500] font-bold ml-2">{count}</span>
-                  </div>
-                  <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ delay: 0.4 + i * 0.08, duration: 0.5, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#FF4500]/60 to-[#FF4500]"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
-        >
-          <div className="flex items-center gap-2 mb-5">
-            <Car className="w-4 h-4 text-[#3B82F6]/50" />
-            <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Most Popular Cars</h3>
-          </div>
-          <div className="space-y-3">
-            {carPopularity.map(([car, count], i) => {
-              const maxCount = carPopularity[0][1];
-              const pct = (count / maxCount) * 100;
-              return (
-                <div key={car}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-white/50 font-medium">{car}</span>
-                    <span className="text-xs text-[#3B82F6] font-bold">{count} leads</span>
-                  </div>
-                  <div className="h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ delay: 0.4 + i * 0.08, duration: 0.5, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#3B82F6]/60 to-[#3B82F6]"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </div>
+          {exportSuccess ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Exported!
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              Export CSV
+            </>
+          )}
+        </button>
+      </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
+        transition={{ delay: 0.1 }}
+        className="flex items-center gap-6 mb-5 px-1"
       >
-        <div className="flex items-center gap-2 mb-5">
-          <BarChart3 className="w-4 h-4 text-white/30" />
-          <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Recent Leads</h3>
+        <div className="text-sm text-gray-500">
+          <span className="font-semibold text-gray-900">{filtered.length}</span> leads
         </div>
-        <div className="space-y-2">
-          {leads.slice(0, 8).map((lead) => {
-            const statusCfg = STATUS_STYLES[lead.status];
-            const StatusIcon = statusCfg.icon;
-            return (
-              <div
-                key={lead.id}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors"
-              >
-                <div className="w-7 h-7 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
-                  <Users className="w-3.5 h-3.5 text-white/30" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white/60 font-medium truncate">{lead.customer}</p>
-                  <p className="text-[10px] text-white/25 truncate">{lead.shopName} &middot; {lead.car}</p>
-                </div>
-                <span
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold shrink-0"
-                  style={{
-                    backgroundColor: statusCfg.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${statusCfg.color}15`,
-                    color: statusCfg.color,
-                    border: `1px solid ${statusCfg.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${statusCfg.color}25`}`,
-                  }}
-                >
-                  <StatusIcon className="w-2.5 h-2.5" />
-                  {statusCfg.label}
-                </span>
-                <span className="text-[10px] text-white/20 shrink-0 hidden sm:block">
-                  {new Date(lead.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-            );
-          })}
+        <div className="text-sm text-gray-500">
+          Total value: <span className="font-semibold text-gray-900">${totalValue.toLocaleString()}</span>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden"
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5">Date</th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5">Customer</th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5">Shop</th>
+                <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5 hidden lg:table-cell">Contact</th>
+                <th className="text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5">Configured Value</th>
+                <th className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-5 py-3.5">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-16 text-sm text-gray-400">
+                    No leads found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((lead, i) => {
+                  const cfg = STATUS_CONFIG[lead.status];
+                  return (
+                    <motion.tr
+                      key={lead.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.02 * i }}
+                      className="border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-sm text-gray-500 whitespace-nowrap">
+                        {new Date(lead.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{lead.customer}</p>
+                          <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Car className="w-3 h-3" /> {lead.car}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-gray-700">{lead.shopName}</td>
+                      <td className="px-5 py-3.5 hidden lg:table-cell">
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Mail className="w-3 h-3 text-gray-400" /> {lead.email}
+                          </p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <Phone className="w-3 h-3 text-gray-400" /> {lead.phone}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <span className="text-sm font-semibold text-gray-900">${lead.configuredValue.toLocaleString()}</span>
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                          {cfg.label}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </motion.div>
     </div>

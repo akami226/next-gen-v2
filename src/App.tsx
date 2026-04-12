@@ -402,7 +402,7 @@ function App() {
       <>
         <div className="h-screen w-screen bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden font-sans antialiased">
           <Header {...headerProps} />
-          <div className="flex-1 overflow-y-auto momentum-scroll">
+          <div className="flex-1 min-h-0 overflow-y-auto momentum-scroll">
             <MobileCarSelector
               cars={cars}
               selectedCarIndex={selectedCarIndex}
@@ -414,11 +414,13 @@ function App() {
             <div className="px-3 pb-3 flex justify-center">
               {actionsBar}
             </div>
-            <div className="px-3 pb-3">{costPanel}</div>
             <MobileModTabs {...modProps} />
             <div className="p-3">
               <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
             </div>
+          </div>
+          <div className="shrink-0 px-3 py-2 bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] border-t border-white/[0.06]">
+            {costPanel}
           </div>
         </div>
         {isShopOwner && <NotificationToast notification={toast} onDismiss={dismissToast} />}
@@ -438,15 +440,19 @@ function App() {
                 onCarChange={handleCarChange}
               />
             </div>
-            <div className="w-[60%] min-w-0 flex flex-col gap-3 overflow-y-auto custom-scrollbar momentum-scroll">
-              <div className="min-h-[50vh] relative">
-                <CenterCanvas {...canvasProps} />
-                <div className="absolute top-3 right-3 z-20">
-                  {actionsBar}
+            <div className="w-[60%] min-w-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar momentum-scroll">
+                <div className="min-h-[50vh] relative">
+                  <CenterCanvas {...canvasProps} />
+                  <div className="absolute top-3 right-3 z-20">
+                    {actionsBar}
+                  </div>
+                </div>
+                <div className="pt-3">
+                  <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
                 </div>
               </div>
-              {costPanel}
-              <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
+              <div className="shrink-0 pt-3">{costPanel}</div>
             </div>
           </div>
         </div>
@@ -466,14 +472,14 @@ function App() {
               onCarChange={handleCarChange}
             />
           </div>
-          <div className="w-1/2 min-w-0 relative flex flex-col">
-            <div className="flex-1 relative">
+          <div className="w-1/2 min-w-0 flex flex-col">
+            <div className="flex-1 relative min-h-0">
               <CenterCanvas {...canvasProps} />
               <div className="absolute top-3 right-3 z-20">
                 {actionsBar}
               </div>
             </div>
-            <div className="pt-3">{costPanel}</div>
+            <div className="shrink-0 pt-3">{costPanel}</div>
           </div>
           <div className="w-1/4 min-w-0">
             <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />

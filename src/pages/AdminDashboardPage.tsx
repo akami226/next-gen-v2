@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import AdminLayout, { type AdminTab } from '../components/admin/AdminLayout';
 import AdminOverview from '../components/admin/AdminOverview';
-import AdminShops from '../components/admin/AdminShops';
-import AdminUsers from '../components/admin/AdminUsers';
 import AdminLeads from '../components/admin/AdminLeads';
-import AdminSubscriptions from '../components/admin/AdminSubscriptions';
+import AdminPricing from '../components/admin/AdminPricing';
+import AdminSettings from '../components/admin/AdminSettings';
 
 interface AdminDashboardPageProps {
   onSignOut: () => void;
@@ -22,10 +21,9 @@ export default function AdminDashboardPage({ onSignOut, onBack }: AdminDashboard
       onBack={onBack}
     >
       {activeTab === 'overview' && <AdminOverview />}
-      {activeTab === 'shops' && <AdminShops />}
-      {activeTab === 'users' && <AdminUsers />}
       {activeTab === 'leads' && <AdminLeads />}
-      {activeTab === 'subscriptions' && <AdminSubscriptions />}
+      {activeTab === 'pricing' && <AdminPricing />}
+      {activeTab === 'settings' && <AdminSettings />}
     </AdminLayout>
   );
 }

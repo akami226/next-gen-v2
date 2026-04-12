@@ -1,30 +1,61 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Store, Users, FileText, DollarSign, TrendingUp, UserPlus, Clock, CheckCircle2 } from 'lucide-react';
-import { getAdminStats, getMonthlyRevenue, getWeeklySignups } from '../../data/adminDemo';
+import {
+  FileText,
+  DollarSign,
+  TrendingUp,
+  Activity,
+  Settings,
+  Star,
+  CreditCard,
+  UserPlus,
+  ArrowUpRight,
+} from 'lucide-react';
+import {
+  getAdminStats,
+  getRecentActivity,
+  getLeadStatusBreakdown,
+  getEngagementData,
+  type ActivityEvent,
+} from '../../data/adminDemo';
+
+const ACTIVITY_ICONS: Record<ActivityEvent['type'], React.ElementType> = {
+  config: Settings,
+  lead: FileText,
+  signup: UserPlus,
+  review: Star,
+  payment: CreditCard,
+};
+
+const ACTIVITY_COLORS: Record<ActivityEvent['type'], string> = {
+  config: '#3B82F6',
+  lead: '#FF4500',
+  signup: '#10B981',
+  review: '#F59E0B',
+  payment: '#8B5CF6',
+};
 
 export default function AdminOverview() {
   const stats = useMemo(() => getAdminStats(), []);
-  const revenue = useMemo(() => getMonthlyRevenue(), []);
-  const signups = useMemo(() => getWeeklySignups(), []);
+  const activity = useMemo(() => getRecentActivity(), []);
+  const leadBreakdown = useMemo(() => getLeadStatusBreakdown(), []);
+  const engagement = useMemo(() => getEngagementData(), []);
 
   const cards = [
-    { label: 'Total Shops', value: stats.totalShops, icon: Store, color: 'var(--accent)', change: '+3 this month' },
-    { label: 'Total Users', value: stats.totalUsers, icon: Users, color: '#3B82F6', change: '+8 this month' },
-    { label: 'Leads This Month', value: stats.totalLeads, icon: FileText, color: '#10B981', change: '+12% vs last' },
-    { label: 'Monthly Revenue', value: `$${stats.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: '#F59E0B', change: '+18% vs last' },
-    { label: 'New This Week', value: stats.newSignupsThisWeek, icon: UserPlus, color: '#06B6D4', change: 'shops + users' },
-    { label: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: '#EF4444', change: 'needs review' },
+    { label: 'Total Leads', value: stats.totalLeads.toString(), icon: FileText, color: '#FF4500', trend: '+12%', trendLabel: 'this week' },
+    { label: 'Revenue Pipeline', value: `$${(stats.monthlyRevenue * 12).toLocaleString()}`, icon: DollarSign, color: '#10B981', trend: '+18%', trendLabel: 'this month' },
+    { label: 'Active Configs', value: '247', icon: Activity, color: '#3B82F6', trend: '+5%', trendLabel: 'this week' },
+    { label: 'Conversion Rate', value: '24.8%', icon: TrendingUp, color: '#F59E0B', trend: '+3.2%', trendLabel: 'vs last month' },
   ];
 
   return (
     <div>
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h2 className="text-xl font-bold text-white">Platform Overview</h2>
-        <p className="text-sm text-white/40 mt-1">Key metrics across the entire NextGen platform.</p>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h2>
+        <p className="text-sm text-gray-500 mt-1">Welcome back. Here's your platform overview.</p>
       </motion.div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -32,21 +63,26 @@ export default function AdminOverview() {
               key={card.label}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.04 }}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4"
+              transition={{ delay: 0.05 + i * 0.05 }}
+              className="bg-white rounded-2xl border border-gray-200/80 p-5 hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
             >
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-                style={{
-                  backgroundColor: card.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${card.color}15`,
-                  border: `1px solid ${card.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${card.color}25`}`,
-                }}
-              >
-                <Icon className="w-4 h-4" style={{ color: card.color }} />
+              <div className="flex items-start justify-between mb-4">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: `${card.color}10` }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: card.color }} />
+                </div>
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">
+                  <ArrowUpRight className="w-3 h-3" />
+                  <span className="text-[11px] font-semibold">{card.trend}</span>
+                </div>
               </div>
-              <p className="text-2xl font-black text-white tracking-tight">{card.value}</p>
-              <p className="text-[10px] text-white/30 uppercase tracking-wider mt-1">{card.label}</p>
-              <p className="text-[9px] text-white/20 mt-1">{card.change}</p>
+              <p className="text-2xl font-bold text-gray-900 tracking-tight">{card.value}</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-gray-500">{card.label}</p>
+                <p className="text-[10px] text-gray-400">{card.trendLabel}</p>
+              </div>
             </motion.div>
           );
         })}
@@ -56,92 +92,92 @@ export default function AdminOverview() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
+          transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl border border-gray-200/80 p-6"
         >
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">Revenue by Plan</h3>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Lead Status Breakdown</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Current pipeline distribution</p>
+            </div>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[10px] text-white/30">
-                <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Starter
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-white/30">
-                <span className="w-2 h-2 rounded-full bg-[#FF4500]" /> Pro
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-white/30">
-                <span className="w-2 h-2 rounded-full bg-[#10B981]" /> Elite
-              </span>
+              {leadBreakdown.map((item) => (
+                <span key={item.status} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.status}
+                </span>
+              ))}
             </div>
           </div>
-          <RevenueChart data={revenue} />
+          <LeadStatusChart data={leadBreakdown} />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl border border-gray-200/80 p-6"
         >
-          <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-5">Weekly Signups</h3>
-          <div className="space-y-4">
-            {signups.map((week, i) => {
-              const total = week.shops + week.users;
-              const maxTotal = Math.max(...signups.map((w) => w.shops + w.users));
-              const pct = (total / maxTotal) * 100;
-              return (
-                <div key={week.week}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-white/40 font-medium">{week.week}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-[#FF4500]">{week.shops} shops</span>
-                      <span className="text-[10px] text-[#3B82F6]">{week.users} users</span>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease: 'easeOut' }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#FF4500] to-[#3B82F6]"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Engagement Over Time</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Weekly platform activity</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span className="w-2 h-2 rounded-full bg-[#FF4500]" /> Configs
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Leads
+              </span>
+            </div>
           </div>
+          <EngagementChart data={engagement} />
         </motion.div>
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-5"
+        transition={{ delay: 0.35 }}
+        className="bg-white rounded-2xl border border-gray-200/80 p-6"
       >
-        <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            { icon: Clock, label: 'Pending Approvals', count: stats.pendingApprovals, color: '#EF4444' },
-            { icon: TrendingUp, label: 'Active Subscriptions', count: stats.activeSubscriptions, color: '#10B981' },
-            { icon: CheckCircle2, label: 'Total Shops', count: stats.totalShops, color: 'var(--accent)' },
-          ].map((action) => {
-            const Icon = action.icon;
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Live platform events</p>
+          </div>
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] font-medium text-emerald-600">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live
+          </span>
+        </div>
+        <div className="space-y-1">
+          {activity.map((event, i) => {
+            const Icon = ACTIVITY_ICONS[event.type];
+            const color = ACTIVITY_COLORS[event.type];
             return (
-              <div key={action.label} className="flex items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.04 }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+              >
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    backgroundColor: action.color.startsWith('var(') ? 'var(--accent-bg-subtle)' : `${action.color}10`,
-                    border: `1px solid ${action.color.startsWith('var(') ? 'var(--accent-border-subtle)' : `${action.color}20`}`,
-                  }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${color}10` }}
                 >
-                  <Icon className="w-5 h-5" style={{ color: action.color }} />
+                  <Icon className="w-4 h-4" style={{ color }} />
                 </div>
-                <div>
-                  <p className="text-lg font-bold text-white">{action.count}</p>
-                  <p className="text-[10px] text-white/30 uppercase tracking-wider">{action.label}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-gray-700">
+                    <span className="font-semibold text-gray-900">{event.actor}</span>
+                    {' '}{event.message}
+                  </p>
                 </div>
-              </div>
+                <span className="text-[11px] text-gray-400 shrink-0">{event.timestamp}</span>
+              </motion.div>
             );
           })}
         </div>
@@ -150,43 +186,106 @@ export default function AdminOverview() {
   );
 }
 
-function RevenueChart({ data }: { data: { month: string; starter: number; professional: number; elite: number }[] }) {
-  const maxVal = Math.max(...data.map((d) => d.starter + d.professional + d.elite));
+function LeadStatusChart({ data }: { data: { status: string; count: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const maxCount = Math.max(...data.map((d) => d.count));
+  const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <div className="flex items-end gap-4 h-44">
-      {data.map((d) => {
-        const total = d.starter + d.professional + d.elite;
-        const starterH = (d.starter / maxVal) * 100;
-        const proH = (d.professional / maxVal) * 100;
-        const eliteH = (d.elite / maxVal) * 100;
-
+    <div className="flex items-end gap-6 h-48 px-2">
+      {data.map((d, i) => {
+        const pct = (d.count / maxCount) * 100;
+        const isHovered = hovered === i;
         return (
-          <div key={d.month} className="flex-1 flex flex-col items-center group relative">
-            <div className="absolute bottom-full mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <div className="bg-[#1a1a1a] border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[10px] whitespace-nowrap shadow-lg">
-                <p className="text-white/60 font-medium mb-0.5">{d.month}</p>
-                <p className="text-[#3B82F6]">Starter: ${d.starter}</p>
-                <p className="text-[#FF4500]">Pro: ${d.professional}</p>
-                <p className="text-[#10B981]">Elite: ${d.elite}</p>
-                <p className="text-white/40 mt-0.5 border-t border-white/[0.06] pt-0.5">Total: ${total}</p>
+          <div
+            key={d.status}
+            className="flex-1 flex flex-col items-center relative"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {isHovered && (
+              <div className="absolute bottom-full mb-3 z-10">
+                <div className="bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
+                  <p className="font-semibold">{d.status}</p>
+                  <p className="text-gray-300">{d.count} leads ({Math.round((d.count / total) * 100)}%)</p>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45 -mt-1" />
+                </div>
               </div>
-            </div>
-            <div className="w-full flex flex-col gap-[2px] items-stretch h-36 justify-end">
-              <div
-                className="rounded-t bg-[#10B981]/50 hover:bg-[#10B981]/70 transition-colors"
-                style={{ height: `${eliteH}%`, minHeight: 2 }}
-              />
-              <div
-                className="bg-[#FF4500]/50 hover:bg-[#FF4500]/70 transition-colors"
-                style={{ height: `${proH}%`, minHeight: 2 }}
-              />
-              <div
-                className="rounded-b bg-[#3B82F6]/40 hover:bg-[#3B82F6]/60 transition-colors"
-                style={{ height: `${starterH}%`, minHeight: 2 }}
+            )}
+            <div className="w-full flex justify-center h-40">
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${pct}%` }}
+                transition={{ delay: 0.3 + i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="w-12 rounded-t-xl transition-all duration-200 cursor-pointer"
+                style={{
+                  backgroundColor: isHovered ? d.color : `${d.color}CC`,
+                  boxShadow: isHovered ? `0 4px 20px ${d.color}40` : 'none',
+                }}
               />
             </div>
-            <span className="text-[9px] text-white/25 mt-2 font-medium">{d.month}</span>
+            <div className="mt-3 text-center">
+              <p className="text-xs font-medium text-gray-600">{d.status}</p>
+              <p className="text-lg font-bold text-gray-900">{d.count}</p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EngagementChart({ data }: { data: { day: string; configurations: number; leads: number; signups: number }[] }) {
+  const maxVal = Math.max(...data.map((d) => d.configurations));
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  return (
+    <div className="flex items-end gap-3 h-48 px-1">
+      {data.map((d, i) => {
+        const configPct = (d.configurations / maxVal) * 100;
+        const leadPct = (d.leads / maxVal) * 100;
+        const isHovered = hovered === i;
+        return (
+          <div
+            key={d.day}
+            className="flex-1 flex flex-col items-center relative"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            {isHovered && (
+              <div className="absolute bottom-full mb-3 z-10">
+                <div className="bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
+                  <p className="font-semibold mb-1">{d.day}</p>
+                  <p className="text-[#FF4500]">{d.configurations} configurations</p>
+                  <p className="text-[#3B82F6]">{d.leads} leads</p>
+                  <p className="text-gray-300">{d.signups} signups</p>
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45 -mt-1" />
+                </div>
+              </div>
+            )}
+            <div className="w-full flex items-end justify-center gap-1.5 h-40">
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${configPct}%` }}
+                transition={{ delay: 0.3 + i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="w-5 rounded-t-lg cursor-pointer transition-all duration-200"
+                style={{
+                  backgroundColor: isHovered ? '#FF4500' : '#FF450099',
+                  boxShadow: isHovered ? '0 4px 12px #FF450040' : 'none',
+                }}
+              />
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${leadPct}%` }}
+                transition={{ delay: 0.35 + i * 0.06, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="w-5 rounded-t-lg cursor-pointer transition-all duration-200"
+                style={{
+                  backgroundColor: isHovered ? '#3B82F6' : '#3B82F699',
+                  boxShadow: isHovered ? '0 4px 12px #3B82F640' : 'none',
+                }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-3 font-medium">{d.day}</p>
           </div>
         );
       })}
