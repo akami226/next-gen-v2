@@ -34,6 +34,7 @@ export interface CarExhaustOption {
   product: string;
   file: string;
   description: string;
+  price: number;
 }
 
 export interface CarOption {

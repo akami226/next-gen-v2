@@ -49,6 +49,7 @@ export interface BuildPriceBreakdown {
   wrap: PriceRange;
   wheels: PriceRange;
   tint: PriceRange;
+  exhaust: PriceRange;
   suspension: PriceRange;
   total: PriceRange;
 }
@@ -57,21 +58,26 @@ export function calculateBuildPrice(
   wrap: Wrap,
   wheelId: string,
   tintId: string,
-  suspensionHeight: number
+  suspensionHeight: number,
+  exhaustPrice: number
 ): BuildPriceBreakdown {
   const wrapPrice = WRAP_PRICES[wrap.name] ?? { low: 2000, high: 3000 };
   const wheelsPrice = WHEEL_PRICES[wheelId] ?? { low: 0, high: 0 };
   const tintPrice = TINT_PRICES[tintId] ?? { low: 0, high: 0 };
   const suspPrice = getSuspensionPrice(suspensionHeight);
+  const exhPrice: PriceRange = exhaustPrice > 0
+    ? { low: exhaustPrice, high: exhaustPrice }
+    : { low: 0, high: 0 };
 
   return {
     wrap: wrapPrice,
     wheels: wheelsPrice,
     tint: tintPrice,
+    exhaust: exhPrice,
     suspension: suspPrice,
     total: {
-      low: wrapPrice.low + wheelsPrice.low + tintPrice.low + suspPrice.low,
-      high: wrapPrice.high + wheelsPrice.high + tintPrice.high + suspPrice.high,
+      low: wrapPrice.low + wheelsPrice.low + tintPrice.low + exhPrice.low + suspPrice.low,
+      high: wrapPrice.high + wheelsPrice.high + tintPrice.high + exhPrice.high + suspPrice.high,
     },
   };
 }

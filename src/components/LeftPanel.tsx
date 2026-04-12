@@ -30,6 +30,8 @@ interface LeftPanelProps {
   onTintChange: (index: number) => void;
   selectedWheelIndex: number;
   onWheelChange: (index: number) => void;
+  selectedExhaustIndex: number | null;
+  onExhaustChange: (index: number | null) => void;
 }
 
 export default function LeftPanel({
@@ -46,8 +48,10 @@ export default function LeftPanel({
   onTintChange,
   selectedWheelIndex,
   onWheelChange,
+  selectedExhaustIndex,
+  onExhaustChange,
 }: LeftPanelProps) {
-  const [activeExhaust, setActiveExhaust] = useState<number | null>(null);
+  const [playingExhaustIndex, setPlayingExhaustIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const handleWheelSelect = useCallback((index: number) => {
@@ -62,7 +66,7 @@ export default function LeftPanel({
       audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
-    setActiveExhaust(null);
+    setPlayingExhaustIndex(null);
     setIsPlaying(false);
   }, []);
 
@@ -70,8 +74,12 @@ export default function LeftPanel({
     stopAudio();
   }, [selectedCarIndex, stopAudio]);
 
-  const handleExhaustToggle = useCallback((index: number) => {
-    if (activeExhaust === index && isPlaying) {
+  const handleExhaustSelect = useCallback((index: number) => {
+    onExhaustChange(selectedExhaustIndex === index ? null : index);
+  }, [selectedExhaustIndex, onExhaustChange]);
+
+  const handlePlaySound = useCallback((index: number) => {
+    if (playingExhaustIndex === index && isPlaying) {
       stopAudio();
       return;
     }
@@ -84,7 +92,7 @@ export default function LeftPanel({
     const audio = new Audio(exhaustOptions[index].file);
     audio.loop = true;
     audioRef.current = audio;
-    setActiveExhaust(index);
+    setPlayingExhaustIndex(index);
     setIsPlaying(true);
 
     audio.addEventListener('ended', () => {
@@ -93,9 +101,9 @@ export default function LeftPanel({
 
     audio.play().catch(() => {
       setIsPlaying(false);
-      setActiveExhaust(null);
+      setPlayingExhaustIndex(null);
     });
-  }, [activeExhaust, isPlaying, exhaustOptions, stopAudio]);
+  }, [playingExhaustIndex, isPlaying, exhaustOptions, stopAudio]);
 
   const label = useMemo(() => getSuspensionLabel(suspensionHeight), [suspensionHeight]);
 
@@ -314,9 +322,10 @@ export default function LeftPanel({
             <ExhaustCard
               key={option.id}
               option={option}
-              isActive={activeExhaust === i}
-              isPlaying={activeExhaust === i && isPlaying}
-              onToggle={() => handleExhaustToggle(i)}
+              isSelected={selectedExhaustIndex === i}
+              isPlaying={playingExhaustIndex === i && isPlaying}
+              onSelect={() => handleExhaustSelect(i)}
+              onPlaySound={() => handlePlaySound(i)}
             />
           ))}
         </div>

@@ -86,6 +86,7 @@ function App() {
   const [suspensionHeight, setSuspensionHeight] = useState(0);
   const [selectedTint, setSelectedTint] = useState(0);
   const [selectedWheelIndex, setSelectedWheelIndex] = useState(0);
+  const [selectedExhaustIndex, setSelectedExhaustIndex] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const wraps = data.wraps as Wrap[];
@@ -103,6 +104,7 @@ function App() {
     setSuspensionHeight(0);
     setSelectedTint(0);
     setSelectedWheelIndex(0);
+    setSelectedExhaustIndex(null);
   }, [selectedCarIndex]);
 
   const buildConfig: BuildConfig = useMemo(() => {
@@ -110,16 +112,18 @@ function App() {
     const wrap = wraps[selectedWrapIndex];
     const wheel = WHEEL_OPTIONS[selectedWheelIndex];
     const tint = TINT_OPTIONS[selectedTint];
-    const exhaust = car.exhaustOptions[0];
+    const exhaust = selectedExhaustIndex !== null
+      ? car.exhaustOptions[selectedExhaustIndex]
+      : null;
 
     return {
       car: `${car.brand} ${car.model}`,
       wrap: `${wrap.brand} ${wrap.name}`,
       wheels: `${wheel.brand} ${wheel.model}`,
       tint: `${tint.brand} ${tint.vlt}`,
-      exhaust: `${exhaust.brand} ${exhaust.product}`,
+      exhaust: exhaust ? `${exhaust.brand} ${exhaust.product}` : 'None',
     };
-  }, [selectedCarIndex, selectedWrapIndex, selectedWheelIndex, selectedTint, wraps]);
+  }, [selectedCarIndex, selectedWrapIndex, selectedWheelIndex, selectedTint, selectedExhaustIndex, wraps]);
 
   const buildIndices = useMemo(() => ({
     carIndex: selectedCarIndex,
@@ -128,12 +132,18 @@ function App() {
     tintIndex: selectedTint,
   }), [selectedCarIndex, selectedWrapIndex, selectedWheelIndex, selectedTint]);
 
+  const selectedExhaustPrice = useMemo(() => {
+    if (selectedExhaustIndex === null) return 0;
+    return cars[selectedCarIndex].exhaustOptions[selectedExhaustIndex]?.price ?? 0;
+  }, [selectedCarIndex, selectedExhaustIndex]);
+
   const buildPrice = useMemo(() => calculateBuildPrice(
     wraps[selectedWrapIndex],
     WHEEL_OPTIONS[selectedWheelIndex].id,
     TINT_OPTIONS[selectedTint].id,
-    suspensionHeight
-  ), [wraps, selectedWrapIndex, selectedWheelIndex, selectedTint, suspensionHeight]);
+    suspensionHeight,
+    selectedExhaustPrice
+  ), [wraps, selectedWrapIndex, selectedWheelIndex, selectedTint, suspensionHeight, selectedExhaustPrice]);
 
   const handleScreenshot = useCallback(() => {
     if (!canvasRef.current) return;
@@ -365,6 +375,8 @@ function App() {
     onTintChange: setSelectedTint,
     selectedWheelIndex,
     onWheelChange: setSelectedWheelIndex,
+    selectedExhaustIndex,
+    onExhaustChange: setSelectedExhaustIndex,
   };
 
   const estimatedPriceLabel = buildPrice.total.high > 0

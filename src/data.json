@@ -152,21 +152,24 @@
           "brand": "Akrapovi\u010d",
           "product": "Evolution Line Titanium",
           "file": "/akrapovic.mp3.mp3",
-          "description": "The ultimate BMW exhaust upgrade. Used on M cars worldwide."
+          "description": "The ultimate BMW exhaust upgrade. Used on M cars worldwide.",
+          "price": 4800
         },
         {
           "id": "m6_armytrix",
           "brand": "Armytrix",
           "product": "Valvetronic Exhaust",
           "file": "/borla.mp3.mp3",
-          "description": "Variable volume valve control. Quiet mode to full roar."
+          "description": "Variable volume valve control. Quiet mode to full roar.",
+          "price": 3200
         },
         {
           "id": "m6_eisenmann",
           "brand": "Eisenmann",
           "product": "Race Line Exhaust",
           "file": "/akrapovic.mp3.mp3",
-          "description": "German engineered. Perfect tone for the M6 V10 engine."
+          "description": "German engineered. Perfect tone for the M6 V10 engine.",
+          "price": 2800
         }
       ]
     },
@@ -181,28 +184,32 @@
           "brand": "Akrapovi\u010d",
           "product": "Evolution Race Exhaust",
           "file": "/akrapovic.mp3.mp3",
-          "description": "The most popular M4 exhaust upgrade. Aggressive crackle on deceleration."
+          "description": "The most popular M4 exhaust upgrade. Aggressive crackle on deceleration.",
+          "price": 4200
         },
         {
           "id": "m4_remus",
           "brand": "Remus",
           "product": "Sport Exhaust System",
           "file": "/borla.mp3.mp3",
-          "description": "Austrian made. Deep aggressive tone with sport valves."
+          "description": "Austrian made. Deep aggressive tone with sport valves.",
+          "price": 2400
         },
         {
           "id": "m4_milltek",
           "brand": "Milltek",
           "product": "Non-Resonated Cat-Back",
           "file": "/akrapovic.mp3.mp3",
-          "description": "Raspy aggressive tone. Very popular on F82 M4 builds."
+          "description": "Raspy aggressive tone. Very popular on F82 M4 builds.",
+          "price": 1900
         },
         {
           "id": "m4_armytrix",
           "brand": "Armytrix",
           "product": "Valvetronic Titanium",
           "file": "/borla.mp3.mp3",
-          "description": "Remote controlled valve exhaust. Whisper quiet to full race mode."
+          "description": "Remote controlled valve exhaust. Whisper quiet to full race mode.",
+          "price": 3600
         }
       ]
     },
@@ -217,28 +224,32 @@
           "brand": "Akrapovi\u010d",
           "product": "Evolution Race Exhaust",
           "file": "/akrapovic.mp3.mp3",
-          "description": "Full titanium race system. Aggressive crackle and pops on overrun."
+          "description": "Full titanium race system. Aggressive crackle and pops on overrun.",
+          "price": 4500
         },
         {
           "id": "g82_remus",
           "brand": "Remus",
           "product": "Sport Exhaust System",
           "file": "/borla.mp3.mp3",
-          "description": "Austrian precision. Deep growl with sport valve control."
+          "description": "Austrian precision. Deep growl with sport valve control.",
+          "price": 2600
         },
         {
           "id": "g82_milltek",
           "brand": "Milltek",
           "product": "Non-Resonated Cat-Back",
           "file": "/akrapovic.mp3.mp3",
-          "description": "Raw and aggressive tone. No resonator for maximum volume."
+          "description": "Raw and aggressive tone. No resonator for maximum volume.",
+          "price": 2100
         },
         {
           "id": "g82_armytrix",
           "brand": "Armytrix",
           "product": "Valvetronic Titanium",
           "file": "/borla.mp3.mp3",
-          "description": "App-controlled valve system. Silent cruise to full race mode."
+          "description": "App-controlled valve system. Silent cruise to full race mode.",
+          "price": 3800
         }
       ]
     }

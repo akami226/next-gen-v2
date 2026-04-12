@@ -1,10 +1,11 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CircleDot, Disc3, ArrowDownUp, AudioLines, PanelTop, RotateCcw, StopCircle, Play, Square } from 'lucide-react';
+import { CircleDot, Disc3, ArrowDownUp, AudioLines, PanelTop, RotateCcw, StopCircle, Volume2, Square } from 'lucide-react';
 import SectionLabel from './SectionLabel';
 import TintCard from './TintCard';
 import type { Wrap, CarOption, TintOption } from '../types';
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
+import { formatPrice } from '../data/pricing';
 
 const TABS = [
   { id: 'wraps', label: 'Wraps', icon: CircleDot },
@@ -51,6 +52,8 @@ interface MobileModTabsProps {
   onTintChange: (index: number) => void;
   selectedWheelIndex: number;
   onWheelChange: (index: number) => void;
+  selectedExhaustIndex: number | null;
+  onExhaustChange: (index: number | null) => void;
 }
 
 export default function MobileModTabs({
@@ -66,9 +69,11 @@ export default function MobileModTabs({
   onTintChange,
   selectedWheelIndex,
   onWheelChange,
+  selectedExhaustIndex,
+  onExhaustChange,
 }: MobileModTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('wraps');
-  const [activeExhaust, setActiveExhaust] = useState<number | null>(null);
+  const [playingExhaustIndex, setPlayingExhaustIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -80,7 +85,7 @@ export default function MobileModTabs({
       audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
-    setActiveExhaust(null);
+    setPlayingExhaustIndex(null);
     setIsPlaying(false);
   }, []);
 
@@ -88,8 +93,12 @@ export default function MobileModTabs({
     stopAudio();
   }, [selectedCarIndex, stopAudio]);
 
-  const handleExhaustToggle = useCallback((index: number) => {
-    if (activeExhaust === index && isPlaying) {
+  const handleExhaustSelect = useCallback((index: number) => {
+    onExhaustChange(selectedExhaustIndex === index ? null : index);
+  }, [selectedExhaustIndex, onExhaustChange]);
+
+  const handlePlaySound = useCallback((index: number) => {
+    if (playingExhaustIndex === index && isPlaying) {
       stopAudio();
       return;
     }
@@ -100,14 +109,14 @@ export default function MobileModTabs({
     const audio = new Audio(exhaustOptions[index].file);
     audio.loop = true;
     audioRef.current = audio;
-    setActiveExhaust(index);
+    setPlayingExhaustIndex(index);
     setIsPlaying(true);
     audio.addEventListener('ended', () => setIsPlaying(false));
     audio.play().catch(() => {
       setIsPlaying(false);
-      setActiveExhaust(null);
+      setPlayingExhaustIndex(null);
     });
-  }, [activeExhaust, isPlaying, exhaustOptions, stopAudio]);
+  }, [playingExhaustIndex, isPlaying, exhaustOptions, stopAudio]);
 
   const label = useMemo(() => getSuspensionLabel(suspensionHeight), [suspensionHeight]);
   const fillPercent = ((suspensionHeight - (-0.3)) / (0.3 - (-0.3))) * 100;
@@ -237,32 +246,52 @@ export default function MobileModTabs({
               )}
               <div className="space-y-2">
                 {exhaustOptions.map((option, i) => {
-                  const isActive = activeExhaust === i;
+                  const isSelected = selectedExhaustIndex === i;
+                  const isSoundPlaying = playingExhaustIndex === i && isPlaying;
                   return (
                     <button
                       key={option.id}
-                      onClick={() => handleExhaustToggle(i)}
+                      onClick={() => handleExhaustSelect(i)}
                       className={`w-full text-left px-4 py-3.5 min-h-[44px] rounded-xl transition-all duration-300 ${
-                        isActive
+                        isSelected
                           ? 'bg-[#FF4500]/10 border border-[#FF4500]/40'
                           : 'bg-white/[0.03] border border-white/[0.06]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-bold ${isActive ? 'text-white' : 'text-white/60'}`}>{option.brand}</p>
-                          <p className={`text-[10px] mt-0.5 ${isActive ? 'text-[#FF4500]/80' : 'text-white/30'}`}>{option.product}</p>
-                          <p className={`text-[9px] mt-1 leading-relaxed ${isActive ? 'text-white/40' : 'text-white/20'}`}>{option.description}</p>
+                          <div className="flex items-center gap-2">
+                            <p className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-white/60'}`}>{option.brand}</p>
+                            <span className={`text-[10px] font-semibold tabular-nums ${isSelected ? 'text-[#FF4500]' : 'text-white/30'}`}>
+                              ${formatPrice(option.price)}
+                            </span>
+                          </div>
+                          <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-[#FF4500]/80' : 'text-white/30'}`}>{option.product}</p>
+                          <p className={`text-[9px] mt-1 leading-relaxed ${isSelected ? 'text-white/40' : 'text-white/20'}`}>{option.description}</p>
                         </div>
                         <div className="ml-3 flex items-center gap-2 shrink-0">
-                          {isActive && isPlaying && <SoundWaveAnimation />}
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
-                            isActive ? 'bg-[#FF4500]/20 text-[#FF4500]' : 'bg-white/[0.06] text-white/30'
-                          }`}>
-                            {isActive && isPlaying ? (
+                          {isSoundPlaying && <SoundWaveAnimation />}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlaySound(i);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.stopPropagation();
+                                handlePlaySound(i);
+                              }
+                            }}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                              isSoundPlaying ? 'bg-[#FF4500]/20 text-[#FF4500]' : 'bg-white/[0.06] text-white/30'
+                            }`}
+                          >
+                            {isSoundPlaying ? (
                               <Square className="w-3.5 h-3.5 fill-current" />
                             ) : (
-                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                              <Volume2 className="w-3.5 h-3.5" />
                             )}
                           </div>
                         </div>

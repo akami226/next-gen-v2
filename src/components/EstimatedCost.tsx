@@ -38,6 +38,7 @@ const ITEMS: { key: keyof Omit<BuildPriceBreakdown, 'total'>; label: string }[] 
   { key: 'wrap', label: 'Wrap' },
   { key: 'wheels', label: 'Wheels' },
   { key: 'tint', label: 'Tint' },
+  { key: 'exhaust', label: 'Exhaust' },
   { key: 'suspension', label: 'Suspension' },
 ];
 
@@ -48,16 +49,13 @@ export default function EstimatedCost({ breakdown }: EstimatedCostProps) {
   if (!hasPrice) return null;
 
   return (
-    <motion.div
-      layout
-      className="bg-white/[0.04] dark:bg-white/[0.04] light:bg-black/[0.04] backdrop-blur-md border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.08] rounded-2xl overflow-hidden"
-    >
+    <div className="bg-white/[0.04] dark:bg-white/[0.04] light:bg-black/[0.04] backdrop-blur-md border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.08] rounded-2xl">
       <button
         onClick={() => setExpanded((p) => !p)}
         className="w-full flex items-center justify-between px-4 py-3 gap-3"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#FF4500]/10 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-[#FF4500]/10 flex items-center justify-center shrink-0">
             <DollarSign className="w-3.5 h-3.5 text-[#FF4500]" />
           </div>
           <span className="text-[11px] font-semibold text-white/50 dark:text-white/50 light:text-black/50 uppercase tracking-wider">
@@ -65,8 +63,8 @@ export default function EstimatedCost({ breakdown }: EstimatedCostProps) {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-[#FF4500]">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm font-bold text-[#FF4500] whitespace-nowrap">
             $<AnimatedNumber value={breakdown.total.low} /> &ndash; $<AnimatedNumber value={breakdown.total.high} />
           </span>
           {expanded ? (
@@ -104,6 +102,6 @@ export default function EstimatedCost({ breakdown }: EstimatedCostProps) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
