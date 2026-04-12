@@ -113,8 +113,10 @@ export default function RightPanel({ shops, buildConfig, onNavigateShop }: Right
             <ShopMap
               shops={displayShops}
               selectedShopId={selectedShopId}
-              onMarkerClick={handleMarkerClick}
-              onNavigateShop={handleViewProfile}
+              onMarkerClick={(shopId) => {
+                handleMarkerClick(shopId);
+                setMapPreviewId((prev) => prev === shopId ? null : shopId);
+              }}
               focusCenter={searchCoords}
             />
           </div>
