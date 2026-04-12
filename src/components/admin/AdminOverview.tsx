@@ -51,8 +51,8 @@ export default function AdminOverview() {
   return (
     <div>
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h2>
-        <p className="text-sm text-gray-500 mt-1">Welcome back. Here's your platform overview.</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Welcome back. Here's your platform overview.</p>
       </motion.div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -64,7 +64,7 @@ export default function AdminOverview() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 + i * 0.05 }}
-              className="bg-white rounded-2xl border border-gray-200/80 p-5 hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
+              className="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200/80 dark:border-white/[0.06] p-5 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/30 transition-all duration-300 group"
             >
               <div className="flex items-start justify-between mb-4">
                 <div
@@ -73,15 +73,15 @@ export default function AdminOverview() {
                 >
                   <Icon className="w-5 h-5" style={{ color: card.color }} />
                 </div>
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <ArrowUpRight className="w-3 h-3" />
                   <span className="text-[11px] font-semibold">{card.trend}</span>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900 tracking-tight">{card.value}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{card.value}</p>
               <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-gray-500">{card.label}</p>
-                <p className="text-[10px] text-gray-400">{card.trendLabel}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{card.label}</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">{card.trendLabel}</p>
               </div>
             </motion.div>
           );
@@ -93,16 +93,16 @@ export default function AdminOverview() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-white rounded-2xl border border-gray-200/80 p-6"
+          className="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200/80 dark:border-white/[0.06] p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Lead Status Breakdown</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Current pipeline distribution</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Lead Status Breakdown</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Current pipeline distribution</p>
             </div>
             <div className="flex items-center gap-3">
               {leadBreakdown.map((item) => (
-                <span key={item.status} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                <span key={item.status} className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                   {item.status}
                 </span>
@@ -116,18 +116,18 @@ export default function AdminOverview() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl border border-gray-200/80 p-6"
+          className="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200/80 dark:border-white/[0.06] p-6"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Engagement Over Time</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Weekly platform activity</p>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Engagement Over Time</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Weekly platform activity</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+              <span className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-[#FF4500]" /> Configs
               </span>
-              <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+              <span className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Leads
               </span>
             </div>
@@ -140,14 +140,14 @@ export default function AdminOverview() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="bg-white rounded-2xl border border-gray-200/80 p-6"
+        className="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200/80 dark:border-white/[0.06] p-6"
       >
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Recent Activity</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Live platform events</p>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Live platform events</p>
           </div>
-          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-[11px] font-medium text-emerald-600">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Live
           </span>
@@ -162,7 +162,7 @@ export default function AdminOverview() {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + i * 0.04 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors group"
               >
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
@@ -171,12 +171,12 @@ export default function AdminOverview() {
                   <Icon className="w-4 h-4" style={{ color }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-gray-700">
-                    <span className="font-semibold text-gray-900">{event.actor}</span>
+                  <p className="text-[13px] text-gray-700 dark:text-gray-300">
+                    <span className="font-semibold text-gray-900 dark:text-white">{event.actor}</span>
                     {' '}{event.message}
                   </p>
                 </div>
-                <span className="text-[11px] text-gray-400 shrink-0">{event.timestamp}</span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 shrink-0">{event.timestamp}</span>
               </motion.div>
             );
           })}
@@ -205,10 +205,10 @@ function LeadStatusChart({ data }: { data: { status: string; count: number; colo
           >
             {isHovered && (
               <div className="absolute bottom-full mb-3 z-10">
-                <div className="bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
+                <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
                   <p className="font-semibold">{d.status}</p>
                   <p className="text-gray-300">{d.count} leads ({Math.round((d.count / total) * 100)}%)</p>
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45 -mt-1" />
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 dark:bg-gray-800 rotate-45 -mt-1" />
                 </div>
               </div>
             )}
@@ -225,8 +225,8 @@ function LeadStatusChart({ data }: { data: { status: string; count: number; colo
               />
             </div>
             <div className="mt-3 text-center">
-              <p className="text-xs font-medium text-gray-600">{d.status}</p>
-              <p className="text-lg font-bold text-gray-900">{d.count}</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{d.status}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{d.count}</p>
             </div>
           </div>
         );
@@ -254,12 +254,12 @@ function EngagementChart({ data }: { data: { day: string; configurations: number
           >
             {isHovered && (
               <div className="absolute bottom-full mb-3 z-10">
-                <div className="bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
+                <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-lg px-3 py-2 text-xs shadow-xl whitespace-nowrap">
                   <p className="font-semibold mb-1">{d.day}</p>
                   <p className="text-[#FF4500]">{d.configurations} configurations</p>
                   <p className="text-[#3B82F6]">{d.leads} leads</p>
                   <p className="text-gray-300">{d.signups} signups</p>
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 rotate-45 -mt-1" />
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-gray-900 dark:bg-gray-800 rotate-45 -mt-1" />
                 </div>
               </div>
             )}
@@ -285,7 +285,7 @@ function EngagementChart({ data }: { data: { day: string; configurations: number
                 }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-3 font-medium">{d.day}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-medium">{d.day}</p>
           </div>
         );
       })}

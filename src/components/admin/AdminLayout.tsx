@@ -12,7 +12,10 @@ import {
   X,
   Sliders,
   ArrowLeft,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 
 export type AdminTab = 'overview' | 'leads' | 'pricing' | 'settings';
 
@@ -40,10 +43,11 @@ const NAV_ITEMS: NavItem[] = [
 export default function AdminLayout({ activeTab, onTabChange, onSignOut, onBack, children }: AdminLayoutProps) {
   const [mobileNav, setMobileNav] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="h-screen w-screen bg-[#f8f9fb] flex font-sans antialiased overflow-hidden">
-      <aside className="hidden lg:flex w-[260px] shrink-0 flex-col bg-white border-r border-gray-200/80">
+    <div className="h-screen w-screen bg-[#f8f9fb] dark:bg-[#0a0a0a] flex font-sans antialiased overflow-hidden transition-colors duration-300">
+      <aside className="hidden lg:flex w-[260px] shrink-0 flex-col bg-white dark:bg-[#111111] border-r border-gray-200/80 dark:border-white/[0.06] transition-colors duration-300">
         <SidebarContent
           activeTab={activeTab}
           onTabChange={onTabChange}
@@ -67,12 +71,12 @@ export default function AdminLayout({ activeTab, onTabChange, onSignOut, onBack,
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 w-[260px] z-50 flex flex-col bg-white border-r border-gray-200/80 lg:hidden"
+              className="fixed left-0 top-0 bottom-0 w-[260px] z-50 flex flex-col bg-white dark:bg-[#111111] border-r border-gray-200/80 dark:border-white/[0.06] lg:hidden"
             >
               <div className="absolute top-4 right-4 z-10">
                 <button
                   onClick={() => setMobileNav(false)}
-                  className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/[0.06] flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -92,29 +96,36 @@ export default function AdminLayout({ activeTab, onTabChange, onSignOut, onBack,
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-200/80">
+        <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-white dark:bg-[#111111] border-b border-gray-200/80 dark:border-white/[0.06] transition-colors duration-300">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileNav(true)}
-              className="lg:hidden w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="lg:hidden w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.1] transition-colors"
             >
               <Menu className="w-4 h-4" />
             </button>
 
             <div className={`relative max-w-md w-full transition-all duration-200 ${searchFocused ? 'max-w-lg' : ''}`}>
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search anything..."
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setSearchFocused(false)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF4500]/20 focus:border-[#FF4500]/40 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-gray-50 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FF4500]/20 focus:border-[#FF4500]/40 transition-all"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-2 ml-4">
-            <button className="relative w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.1] transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button className="relative w-9 h-9 rounded-xl bg-gray-50 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.1] transition-colors">
               <Bell className="w-4 h-4" />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#FF4500] text-[9px] font-bold text-white flex items-center justify-center">3</span>
             </button>
@@ -153,18 +164,18 @@ function SidebarContent({
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold text-gray-900 tracking-tight">NextGen Admin</p>
-            <p className="text-[11px] text-gray-400">Platform Management</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">NextGen Admin</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">Platform Management</p>
           </div>
         </div>
       </div>
 
       <div className="px-3 mb-2">
-        <div className="h-px bg-gray-100" />
+        <div className="h-px bg-gray-100 dark:bg-white/[0.06]" />
       </div>
 
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold px-3 mb-2">Main Menu</p>
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-semibold px-3 mb-2">Main Menu</p>
         <div className="space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -176,10 +187,10 @@ function SidebarContent({
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 ${
                   active
                     ? 'bg-[#FF4500]/[0.08] text-[#FF4500] shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
                 }`}
               >
-                <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-[#FF4500]' : 'text-gray-400'}`} />
+                <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-[#FF4500]' : 'text-gray-400 dark:text-gray-500'}`} />
                 {item.label}
                 {active && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#FF4500]" />
@@ -191,19 +202,19 @@ function SidebarContent({
       </nav>
 
       <div className="px-3 pb-3 space-y-1">
-        <div className="h-px bg-gray-100 mb-2" />
+        <div className="h-px bg-gray-100 dark:bg-white/[0.06] mb-2" />
         <button
           onClick={onBack}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors"
         >
-          <ArrowLeft className="w-[18px] h-[18px] shrink-0 text-gray-400" />
+          <ArrowLeft className="w-[18px] h-[18px] shrink-0 text-gray-400 dark:text-gray-500" />
           Back to Site
         </button>
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
         >
-          <LogOut className="w-[18px] h-[18px] shrink-0 text-gray-400" />
+          <LogOut className="w-[18px] h-[18px] shrink-0 text-gray-400 dark:text-gray-500" />
           Sign Out
         </button>
       </div>
