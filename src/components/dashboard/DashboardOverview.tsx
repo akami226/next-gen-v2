@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Eye, FileText, Star, MessageSquareQuote, ExternalLink } from 'lucide-react';
 import type { Shop } from '../../types';
@@ -94,10 +94,10 @@ export default function DashboardOverview({ shop, onPreviewShop }: DashboardOver
           </h3>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-[10px] text-white/30">
-              <span className="w-2 h-2 rounded-full bg-[#FF4500]" /> Leads
+              <span className="w-2 h-2 rounded-full" style={{ background: 'linear-gradient(135deg, #10B981, #6EE7B7)' }} /> Leads
             </span>
             <span className="flex items-center gap-1.5 text-[10px] text-white/30">
-              <span className="w-2 h-2 rounded-full bg-[#3B82F6]" /> Views
+              <span className="w-2 h-2 rounded-full" style={{ background: 'linear-gradient(135deg, #3B82F6, #60A5FA)' }} /> Views
             </span>
           </div>
         </div>
@@ -111,48 +111,76 @@ function MetricsChart({ metrics }: { metrics: DailyMetric[] }) {
   const maxViews = Math.max(...metrics.map((m) => m.views));
   const maxLeads = Math.max(...metrics.map((m) => m.leads));
   const chartMax = Math.max(maxViews, maxLeads * 5);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   return (
     <div className="relative">
-      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none h-32">
-        {[0.25, 0.5, 0.75, 1.0].map((pct) => (
-          <div key={pct} className="w-full border-b border-white/[0.04]" />
+      <div className="absolute inset-x-0 top-0 h-32 flex flex-col justify-between pointer-events-none">
+        {[0, 0.25, 0.5, 0.75, 1.0].map((pct) => (
+          <div key={pct} className="flex items-center gap-2">
+            <span className="text-[8px] text-white/15 w-6 text-right tabular-nums shrink-0">
+              {Math.round(chartMax * (1 - pct))}
+            </span>
+            <div className="flex-1 border-b border-white/[0.04]" />
+          </div>
         ))}
       </div>
-      <div className="flex items-end gap-[3px] h-40 relative">
+      <div className="flex items-end gap-[2px] h-40 pl-8 relative">
         {metrics.map((m, i) => {
           const viewH = (m.views / chartMax) * 100;
           const leadH = (m.leads / chartMax) * 100 * 5;
           const showLabel = i % 5 === 0 || i === metrics.length - 1;
+          const isHovered = hoveredIdx === i;
           return (
-            <div key={m.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
-              <div className="absolute bottom-full mb-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <div className="bg-[#1a1a1a] border border-white/[0.1] rounded-lg px-3 py-2 text-[10px] whitespace-nowrap shadow-xl">
-                  <p className="text-white/60 font-medium mb-1">{m.label}</p>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-                    <span className="text-[#3B82F6] font-semibold">{m.views} views</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]" />
-                    <span className="text-[#FF4500] font-semibold">{m.leads} leads</span>
+            <div
+              key={m.date}
+              className="flex-1 flex flex-col items-center gap-0.5 relative"
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(null)}
+            >
+              {isHovered && (
+                <div className="absolute bottom-full mb-2 pointer-events-none z-20">
+                  <div className="bg-[#1a1a1a] light:bg-white border border-white/[0.1] light:border-gray-200 rounded-xl px-3.5 py-2.5 text-[10px] whitespace-nowrap shadow-2xl light:shadow-lg light:shadow-black/10">
+                    <p className="text-white/60 light:text-gray-500 font-semibold mb-1.5">{m.label}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full" style={{ background: 'linear-gradient(135deg, #3B82F6, #60A5FA)' }} />
+                      <span className="text-[#60A5FA] font-bold">{m.views}</span>
+                      <span className="text-white/30">views</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full" style={{ background: 'linear-gradient(135deg, #10B981, #6EE7B7)' }} />
+                      <span className="text-[#6EE7B7] font-bold">{m.leads}</span>
+                      <span className="text-white/30">leads</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
               <div className="w-full flex gap-[1px] items-end h-32">
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${viewH}%` }}
-                  transition={{ delay: 0.05 + i * 0.015, duration: 0.4, ease: 'easeOut' }}
-                  className="flex-1 rounded-t-[4px] bg-[#3B82F6]/40 group-hover:bg-[#3B82F6]/70 transition-colors duration-150"
-                  style={{ minHeight: 2 }}
+                  transition={{ delay: 0.05 + i * 0.015, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-1 rounded-t-[6px] transition-all duration-200"
+                  style={{
+                    background: isHovered
+                      ? 'linear-gradient(180deg, #60A5FA, #3B82F6)'
+                      : 'linear-gradient(180deg, rgba(96, 165, 250, 0.5), rgba(59, 130, 246, 0.25))',
+                    minHeight: 2,
+                    boxShadow: isHovered ? '0 0 12px rgba(59, 130, 246, 0.3)' : 'none',
+                  }}
                 />
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${leadH}%` }}
-                  transition={{ delay: 0.08 + i * 0.015, duration: 0.4, ease: 'easeOut' }}
-                  className="flex-1 rounded-t-[4px] bg-[#FF4500]/40 group-hover:bg-[#FF4500]/70 transition-colors duration-150"
-                  style={{ minHeight: 2 }}
+                  transition={{ delay: 0.08 + i * 0.015, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-1 rounded-t-[6px] transition-all duration-200"
+                  style={{
+                    background: isHovered
+                      ? 'linear-gradient(180deg, #6EE7B7, #10B981)'
+                      : 'linear-gradient(180deg, rgba(110, 231, 183, 0.5), rgba(16, 185, 129, 0.25))',
+                    minHeight: 2,
+                    boxShadow: isHovered ? '0 0 12px rgba(16, 185, 129, 0.3)' : 'none',
+                  }}
                 />
               </div>
               {showLabel && (

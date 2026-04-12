@@ -42,7 +42,7 @@ const ITEMS: { key: keyof Omit<BuildPriceBreakdown, 'total'>; label: string }[] 
 ];
 
 export default function EstimatedCost({ breakdown }: EstimatedCostProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const hasPrice = breakdown.total.high > 0;
   if (!hasPrice) return null;

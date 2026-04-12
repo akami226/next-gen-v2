@@ -25,6 +25,7 @@ interface RightPanelProps {
 export default function RightPanel({ shops, buildConfig, onNavigateShop }: RightPanelProps) {
   const [modalShopId, setModalShopId] = useState<string | null>(null);
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
+  const [mapPreviewId, setMapPreviewId] = useState<string | null>(null);
   const [searchCoords, setSearchCoords] = useState<GeoCoords | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -142,6 +143,8 @@ export default function RightPanel({ shops, buildConfig, onNavigateShop }: Right
                         onGetQuote={() => setModalShopId(shop.id)}
                         onViewProfile={handleViewProfile}
                         distance={(shop as ShopWithDistance).distance}
+                        showMapPreview={mapPreviewId === shop.id}
+                        onToggleMapPreview={(id) => setMapPreviewId((prev) => prev === id ? null : id)}
                       />
                     </div>
                   ))}
