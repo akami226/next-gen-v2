@@ -6,6 +6,7 @@ export function createWrapMaterial(wrap: Wrap): THREE.MeshPhysicalMaterial {
   const color = new THREE.Color(wrap.hex);
   const isMetallic = wrap.metalness > 0.5;
   const isMatte = wrap.roughness > 0.6;
+  const isGloss = wrap.roughness < 0.1;
 
   return new THREE.MeshPhysicalMaterial({
     color,
@@ -13,11 +14,14 @@ export function createWrapMaterial(wrap: Wrap): THREE.MeshPhysicalMaterial {
     metalness: wrap.metalness,
     clearcoat: wrap.clearcoat ?? (isMetallic ? 1.0 : isMatte ? 0.2 : 0.7),
     clearcoatRoughness: wrap.clearcoatRoughness ?? (isMatte ? 0.3 : 0.04),
-    envMapIntensity: wrap.envMapIntensity ?? (isMetallic ? 2.0 : 1.5),
+    envMapIntensity: wrap.envMapIntensity ?? (isMetallic ? 2.4 : isGloss ? 1.8 : 1.2),
     iridescence: wrap.iridescence ?? 0,
     iridescenceIOR: wrap.iridescenceIOR ?? 1.3,
     reflectivity: wrap.reflectivity ?? (isMetallic ? 1.0 : 0.6),
     specularIntensity: isMetallic ? 1.0 : 0.5,
+    specularColor: new THREE.Color('#ffffff'),
+    thickness: isGloss ? 0.45 : 0.28,
+    ior: isMetallic ? 1.7 : 1.52,
     sheen: isMatte ? 0.4 : 0,
     sheenRoughness: 0.8,
     sheenColor: color,
@@ -58,9 +62,11 @@ function createRimMaterial(): THREE.MeshPhysicalMaterial {
     color: new THREE.Color('#c0c0c0'),
     roughness: 0.08,
     metalness: 1.0,
-    envMapIntensity: 3.0,
+    envMapIntensity: 3.2,
     clearcoat: 1.0,
     clearcoatRoughness: 0.03,
+    ior: 1.75,
+    thickness: 0.1,
     reflectivity: 1.0,
     specularIntensity: 1.0,
     specularColor: new THREE.Color('#ffffff'),
@@ -137,6 +143,10 @@ export function createTintMaterial(matSettings: {
 
 export function createRimMaterialForWheel(wheelOption: {
   finish: string;
+  transform?: {
+    scale: number;
+    profile: number;
+  };
   material?: {
     color: string;
     roughness: number;
@@ -154,6 +164,8 @@ export function createRimMaterialForWheel(wheelOption: {
       envMapIntensity: wheelOption.material.envMapIntensity,
       clearcoat: wheelOption.material.clearcoat ?? 0.8,
       clearcoatRoughness: wheelOption.material.clearcoatRoughness ?? 0.05,
+      ior: 1.7,
+      thickness: 0.1,
       reflectivity: 1.0,
       specularIntensity: 1.0,
       specularColor: new THREE.Color('#ffffff'),

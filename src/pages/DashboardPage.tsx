@@ -33,8 +33,9 @@ interface DashboardPageProps {
   onClickNotification: (notification: ShopNotification) => void;
 }
 
-export default function DashboardPage({ shop, shopOwnerData, user, initialTab, onSignOut, onBack, onBrandingUpdate, onPreviewShop, notifications, onMarkRead, onMarkAllRead, onDeleteNotification, onViewAllNotifications: _onViewAllNotifications, onClickNotification }: DashboardPageProps) {
+export default function DashboardPage({ shop, shopOwnerData, user, initialTab, onSignOut, onBack, onBrandingUpdate, onPreviewShop, notifications, onMarkRead, onMarkAllRead, onDeleteNotification, onViewAllNotifications, onClickNotification }: DashboardPageProps) {
   useSEO(SEO_CONFIGS.dashboard);
+  void onViewAllNotifications;
   const [activeTab, setActiveTab] = useState<DashboardTab>(() => {
     const validTabs: DashboardTab[] = ['overview', 'leads', 'reviews', 'profile', 'photos', 'socials', 'branding', 'settings', 'statistics', 'subscription', 'notifications'];
     if (initialTab && validTabs.includes(initialTab as DashboardTab)) {

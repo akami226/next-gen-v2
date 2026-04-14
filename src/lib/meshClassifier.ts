@@ -8,6 +8,8 @@ const RIM_NAMES = ['rim', 'wheel', 'spoke', 'hub', 'brake', 'caliper', 'disc', '
 const LIGHT_NAMES = ['light', 'lamp', 'headlight', 'taillight', 'indicator', 'blinker', 'led'];
 const EXHAUST_NAMES = ['exhaust', 'pipe', 'muffler', 'tip'];
 const INTERIOR_NAMES = ['interior', 'seat', 'dash', 'steering', 'cockpit', 'cabin', 'floor', 'carpet'];
+const BODY_PRIORITY_NAMES = ['roof', 'sunroof', 'hood', 'fender', 'bumper', 'trunk', 'tailgate', 'body', 'quarterpanel', 'quarter_panel', 'pillar'];
+const WINDOW_EXCEPTIONS = ['windshield', 'windscreen', 'window', 'doorglass', 'sideglass', 'backlight', 'rearglass', 'rear_glass', 'front_glass'];
 
 function nameContainsAny(name: string, keywords: string[]): boolean {
   const lower = name.toLowerCase();
@@ -15,7 +17,16 @@ function nameContainsAny(name: string, keywords: string[]): boolean {
 }
 
 function classifyByName(meshName: string, matName: string): MeshClassification | null {
-  const combined = meshName + ' ' + matName;
+  const combined = `${meshName} ${matName}`.toLowerCase();
+
+  // Prefer body classification for major paint panels before other heuristics.
+  // Some assets use carbon/glass-like materials for roof sections that should still follow wrap color.
+  const isBodyPriority = BODY_PRIORITY_NAMES.some((kw) => combined.includes(kw));
+  const isExplicitWindow = WINDOW_EXCEPTIONS.some((kw) => combined.includes(kw));
+  if (isBodyPriority && !isExplicitWindow) return 'body';
+
+  // Asset-specific fallback: roof section named as body but material contains glass alias.
+  if (combined.includes('body_sedan') && combined.includes('quati_glass')) return 'body';
 
   if (nameContainsAny(combined, GLASS_NAMES)) return 'glass';
   if (nameContainsAny(combined, TIRE_NAMES)) return 'tire';
@@ -73,8 +84,7 @@ export function classifyMesh(mesh: THREE.Mesh): MeshClassification {
 }
 
 export function scanAndClassify(
-  scene: THREE.Object3D,
-  _carLabel?: string
+  scene: THREE.Object3D
 ): Map<THREE.Mesh, MeshClassification> {
   const result = new Map<THREE.Mesh, MeshClassification>();
 

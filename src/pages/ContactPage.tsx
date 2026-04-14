@@ -75,8 +75,9 @@ const fade = {
   viewport: { once: true, margin: '-60px' },
 };
 
-export default function ContactPage({ onBack: _onBack, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: ContactPageProps) {
+export default function ContactPage({ onBack, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: ContactPageProps) {
   useSEO(SEO_CONFIGS.contact);
+  void onBack;
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
