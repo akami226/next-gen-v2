@@ -32,6 +32,7 @@ export default function AuthPage({ onSignUp, onSignIn, onResetPassword, onBack, 
   const [resetSent, setResetSent] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const submitting = useRef(false);
+  const lastSubmitAt = useRef(0);
 
   const validate = useCallback(() => {
     const errs: Record<string, string> = {};
@@ -64,6 +65,10 @@ export default function AuthPage({ onSignUp, onSignIn, onResetPassword, onBack, 
     const errs = validate();
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
+
+    const now = Date.now();
+    if (now - lastSubmitAt.current < 800) return;
+    lastSubmitAt.current = now;
 
     submitting.current = true;
     setLoading(true);
