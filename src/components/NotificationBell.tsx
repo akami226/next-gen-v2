@@ -61,8 +61,9 @@ export default function NotificationBell({
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="relative w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all"
+        className="relative w-8 h-8 rounded-lg bg-white/[0.04] dark:bg-white/[0.04] light:bg-black/[0.04] border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.12] flex items-center justify-center text-white/40 dark:text-white/40 light:text-gray-600 hover:text-white/70 dark:hover:text-white/70 light:hover:text-gray-900 hover:bg-white/[0.08] dark:hover:bg-white/[0.08] light:hover:bg-black/[0.06] transition-all"
       >
         <Bell className="w-3.5 h-3.5" />
         {unreadCount > 0 && (
@@ -79,15 +80,15 @@ export default function NotificationBell({
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            initial={{ y: -10, scale: 0.97 }}
+            animate={{ y: 0, scale: 1 }}
+            exit={{ y: -8, scale: 0.97 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute top-full right-0 mt-2 w-80 sm:w-96 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
+            className="absolute top-full right-0 mt-2 w-[min(100vw-2rem,20rem)] sm:w-96 max-w-[calc(100vw-2rem)] rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white shadow-2xl"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] dark:border-white/[0.06] light:border-gray-200">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-white/80">Notifications</h3>
+                <h3 className="text-xs font-bold text-white/80 dark:text-white/80 light:text-gray-900">Notifications</h3>
                 {unreadCount > 0 && (
                   <span className="px-1.5 py-0.5 rounded-md text-[9px] text-[#FF4500] font-bold" style={{ background: `rgba(var(--accent-rgb),0.12)` }}>
                     {unreadCount} new
@@ -99,7 +100,7 @@ export default function NotificationBell({
                   onClick={() => {
                     onMarkAllRead();
                   }}
-                  className="flex items-center gap-1 text-[10px] text-white/40 hover:text-white/70 font-medium transition-colors"
+                  className="flex items-center gap-1 text-[10px] text-white/40 dark:text-white/40 light:text-gray-600 hover:text-white/70 dark:hover:text-white/70 light:hover:text-gray-900 font-medium transition-colors"
                 >
                   <Check className="w-3 h-3" />
                   Mark all read
@@ -110,8 +111,8 @@ export default function NotificationBell({
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               {recent.length === 0 ? (
                 <div className="py-12 text-center">
-                  <Bell className="w-6 h-6 text-white/10 mx-auto mb-2" />
-                  <p className="text-xs text-white/30">No notifications yet</p>
+                  <Bell className="w-6 h-6 text-white/10 dark:text-white/10 light:text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs text-white/30 dark:text-white/30 light:text-gray-500">No notifications yet</p>
                 </div>
               ) : (
                 recent.map((notif, i) => {
@@ -128,7 +129,7 @@ export default function NotificationBell({
                         onClickNotification(notif);
                         setOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors border-b border-white/[0.04] hover:bg-white/[0.04] ${!notif.is_read ? 'bg-white/[0.02]' : ''}`}
+                      className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors border-b border-white/[0.04] dark:border-white/[0.04] light:border-gray-100 hover:bg-white/[0.04] dark:hover:bg-white/[0.04] light:hover:bg-gray-50 ${!notif.is_read ? 'bg-white/[0.02] dark:bg-white/[0.02] light:bg-gray-50/80' : ''}`}
                     >
                       <div
                         className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
@@ -141,14 +142,14 @@ export default function NotificationBell({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs font-semibold text-white/80 truncate">{notif.customer_name}</span>
-                          <span className="text-[9px] text-white/25 shrink-0">{timeAgo(notif.created_at)}</span>
+                          <span className="text-xs font-semibold text-white/80 dark:text-white/80 light:text-gray-900 truncate">{notif.customer_name}</span>
+                          <span className="text-[9px] text-white/25 dark:text-white/25 light:text-gray-500 shrink-0">{timeAgo(notif.created_at)}</span>
                           {!notif.is_read && (
                             <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500] shrink-0" />
                           )}
                         </div>
-                        <p className="text-[10px] font-medium text-white/50 mb-0.5">{notif.title}</p>
-                        <p className="text-[10px] text-white/30 line-clamp-2 leading-relaxed">{notif.message}</p>
+                        <p className="text-[10px] font-medium text-white/50 dark:text-white/50 light:text-gray-600 mb-0.5">{notif.title}</p>
+                        <p className="text-[10px] text-white/30 dark:text-white/30 light:text-gray-500 line-clamp-2 leading-relaxed">{notif.message}</p>
                       </div>
                     </motion.button>
                   );
@@ -162,7 +163,7 @@ export default function NotificationBell({
                   onViewAll();
                   setOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-[10px] text-[#FF4500]/70 font-semibold uppercase tracking-wider hover:text-[#FF4500] transition-colors border-t border-white/[0.06]"
+                className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-[10px] text-[#FF4500]/70 dark:text-[#FF4500]/70 light:text-[#2563EB] font-semibold uppercase tracking-wider hover:text-[#FF4500] dark:hover:text-[#FF4500] light:hover:text-[#1d4ed8] transition-colors border-t border-white/[0.06] dark:border-white/[0.06] light:border-gray-200"
               >
                 View All Notifications
                 <ChevronRight className="w-3 h-3" />

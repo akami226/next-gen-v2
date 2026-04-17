@@ -10,11 +10,12 @@ export function createWrapMaterial(wrap: Wrap): THREE.MeshPhysicalMaterial {
 
   return new THREE.MeshPhysicalMaterial({
     color,
+    side: THREE.FrontSide,
     roughness: wrap.roughness,
     metalness: wrap.metalness,
-    clearcoat: wrap.clearcoat ?? (isMetallic ? 1.0 : isMatte ? 0.2 : 0.7),
-    clearcoatRoughness: wrap.clearcoatRoughness ?? (isMatte ? 0.3 : 0.04),
-    envMapIntensity: wrap.envMapIntensity ?? (isMetallic ? 2.4 : isGloss ? 1.8 : 1.2),
+    clearcoat: wrap.clearcoat ?? (isMetallic ? 1.0 : isMatte ? 0.2 : 0.75),
+    clearcoatRoughness: wrap.clearcoatRoughness ?? (isMatte ? 0.32 : 0.035),
+    envMapIntensity: wrap.envMapIntensity ?? (isMetallic ? 2.4 : isGloss ? 1.85 : 1.2),
     iridescence: wrap.iridescence ?? 0,
     iridescenceIOR: wrap.iridescenceIOR ?? 1.3,
     reflectivity: wrap.reflectivity ?? (isMetallic ? 1.0 : 0.6),
@@ -31,11 +32,13 @@ export function createWrapMaterial(wrap: Wrap): THREE.MeshPhysicalMaterial {
 function createGlassMaterial(): THREE.MeshPhysicalMaterial {
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color('#0a0a0a'),
+    side: THREE.DoubleSide,
     roughness: 0.0,
     metalness: 0.0,
     transmission: 0.92,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.32,
+    depthWrite: false,
     thickness: 0.4,
     ior: 1.52,
     envMapIntensity: 2.0,
@@ -118,17 +121,19 @@ export function createTintMaterial(matSettings: {
   roughness: number;
   metalness: number;
 }): THREE.MeshPhysicalMaterial {
-  // Map opacity (0.1–0.85) to glass-like transmission (1.0 → 0.1)
-  const transmission = Math.max(0.05, 1.0 - matSettings.opacity);
+  // Keep interiors visible across cars that use multiple overlapped window meshes.
+  const transmission = Math.max(0.28, 1.0 - matSettings.opacity * 0.75);
   const isNoTint = matSettings.opacity <= 0.12;
 
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(isNoTint ? '#87CEEB' : matSettings.color),
+    side: THREE.DoubleSide,
     roughness: 0.0,
     metalness: 0.0,
     transmission,
     transparent: true,
-    opacity: isNoTint ? 0.85 : 0.95,
+    opacity: isNoTint ? 0.58 : 0.68,
+    depthWrite: false,
     thickness: 0.3,
     ior: 1.52,
     envMapIntensity: 1.5,
@@ -137,7 +142,7 @@ export function createTintMaterial(matSettings: {
     specularIntensity: 0.8,
     specularColor: new THREE.Color('#ffffff'),
     attenuationColor: new THREE.Color(isNoTint ? '#aaccff' : matSettings.color),
-    attenuationDistance: isNoTint ? 2.0 : 0.6,
+    attenuationDistance: isNoTint ? 2.4 : 1.2,
   });
 }
 

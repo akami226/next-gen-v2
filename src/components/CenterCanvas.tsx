@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState, useCallback } from 'react';
+import { Suspense, useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, useProgress, Lightformer, AdaptiveDpr } from '@react-three/drei';
 import { EffectComposer, Bloom, N8AO, ToneMapping } from '@react-three/postprocessing';
@@ -11,6 +11,7 @@ import type { Wrap, TintOption } from '../types';
 import { scanAndClassify, type MeshClassification } from '../lib/meshClassifier';
 import { createWrapMaterial, getPermanentMaterial, createTintMaterial, createRimMaterialForWheel } from '../lib/carMaterials';
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
+import { SUSPENSION_SLIDER_MAX, SUSPENSION_SLIDER_MIN } from '../lib/configuratorConstants';
 
 function getWrapKey(wrap: Wrap): string {
   return [
@@ -24,8 +25,27 @@ function getWrapKey(wrap: Wrap): string {
     wrap.iridescence ?? '',
     wrap.iridescenceIOR ?? '',
     wrap.reflectivity ?? '',
+    wrap.envMapIntensity ?? '',
     wrap.materialType,
   ].join('|');
+}
+
+/** KTX2 + Draco/Meshopt — same hook used by `useGLTF.preload`. */
+function extendCarGltfLoader(loader: object) {
+  const gltfLoader = loader as {
+    manager: THREE.LoadingManager;
+    setKTX2Loader: (ktx2: KTX2Loader) => void;
+  };
+  const renderer = (window as unknown as { __R3F_GL__?: THREE.WebGLRenderer }).__R3F_GL__;
+  if (!renderer) return;
+  try {
+    const ktx2 = new KTX2Loader(gltfLoader.manager)
+      .setTranscoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/basis/')
+      .detectSupport(renderer);
+    gltfLoader.setKTX2Loader(ktx2);
+  } catch {
+    /* Basis transcoder may fail in restricted contexts */
+  }
 }
 
 function shouldTreatGlassAsBody(mesh: THREE.Mesh): boolean {
@@ -36,7 +56,9 @@ function shouldTreatGlassAsBody(mesh: THREE.Mesh): boolean {
 
   // Some car files name painted roof panels with "glass"/"window" terms.
   // Keep windshield/side/rear windows as tintable glass, but force roof panels to wrap.
-  const roofLike = /roof|sunroof|top|upper|body_sedan/.test(combined);
+  // Keep this strict: broad tokens like "top"/"upper" were mislabeling real windows
+  // as body on some cars, which made glass opaque and hid seats/steering.
+  const roofLike = /(^|[\s_])(roof|sunroof|roofpanel|roof_panel|roofskin|roof_skin|body_sedan)([\s_]|$)/.test(combined);
   const explicitWindow = /windshield|windscreen|window|doorglass|sideglass|side_glass|backlight|rearglass|rear_glass/.test(combined);
   return roofLike && !explicitWindow;
 }
@@ -94,7 +116,7 @@ function FadeWrapper({ children, carFile }: { children: React.ReactNode; carFile
   return <group ref={groupRef}>{children}</group>;
 }
 
-function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded }: {
+const CarModel = memo(function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded }: {
   wrap: Wrap;
   carFile: string;
   suspensionHeight: number;
@@ -102,15 +124,7 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
   wheelIndex: number;
   onLoaded: () => void;
 }) {
-  const { scene } = useGLTF(carFile, undefined, undefined, (loader) => {
-    const gltfLoader = loader as unknown as { setKTX2Loader: (ktx2: KTX2Loader) => void; manager: THREE.LoadingManager };
-    const renderer = (window as unknown as { __R3F_GL__?: THREE.WebGLRenderer }).__R3F_GL__;
-    if (!renderer) return;
-    const ktx2 = new KTX2Loader(gltfLoader.manager)
-      .setTranscoderPath('https://unpkg.com/three@0.165.0/examples/jsm/libs/basis/')
-      .detectSupport(renderer);
-    gltfLoader.setKTX2Loader(ktx2);
-  });
+  const { scene } = useGLTF(carFile, true, true, extendCarGltfLoader);
   const classified = useRef<Map<THREE.Mesh, MeshClassification>>(new Map());
   const lastClassifiedFile = useRef('');
   const permanentApplied = useRef(false);
@@ -131,6 +145,7 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
   const suspAnimating = useRef(false);
   const { invalidate, camera } = useThree();
   const lodBuckets = useRef<{ mesh: THREE.Mesh; maxDist: number }[]>([]);
+  const lodWorldPos = useRef(new THREE.Vector3());
 
   if (lastClassifiedFile.current !== carFile) {
     lastClassifiedFile.current = carFile;
@@ -195,6 +210,10 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
     const tinyPartDist = carScale * 1.4;
     scene.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
+      const meshType = classified.current.get(child);
+      // Never distance-cull interior/glass/lights: some car files split cabin into many
+      // tiny meshes, and culling them removes seats/steering at normal camera distances.
+      if (meshType === 'interior' || meshType === 'glass' || meshType === 'light') return;
       if (!child.geometry.boundingSphere) child.geometry.computeBoundingSphere();
       const radius = child.geometry.boundingSphere?.radius ?? 0;
       if (radius < 0.03) lodBuckets.current.push({ mesh: child, maxDist: tinyPartDist });
@@ -270,13 +289,13 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
       (mesh.material as THREE.Material).dispose?.();
       const baseScale = rimBaseScale.current.get(mesh);
       if (baseScale) {
-        const scale = wheelOption.transform?.scale ?? 1;
+        const scale = THREE.MathUtils.clamp(wheelOption.transform?.scale ?? 1, 0.88, 1.12);
         mesh.scale.set(baseScale.x * scale, baseScale.y * scale, baseScale.z * scale);
       }
 
       const baseGeometry = rimBaseGeometry.current.get(mesh);
       if (baseGeometry) {
-        const profile = wheelOption.transform?.profile ?? 1;
+        const profile = THREE.MathUtils.clamp(wheelOption.transform?.profile ?? 1, 0.9, 1.1);
         const geom = baseGeometry.clone();
         geom.scale(1, profile, 1);
         geom.computeVertexNormals();
@@ -319,7 +338,8 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
     let needsFrame = false;
 
     if (suspAnimating.current && groupRef.current) {
-      const target = suspensionHeight * suspensionRange.current;
+      const norm = THREE.MathUtils.clamp(suspensionHeight, SUSPENSION_SLIDER_MIN, SUSPENSION_SLIDER_MAX);
+      const target = norm * suspensionRange.current;
       const diff = target - currentYOffset.current;
       if (Math.abs(diff) > 0.0001) {
         const response = 1 - Math.exp(-12 * delta);
@@ -353,7 +373,8 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
     }
 
     for (const item of lodBuckets.current) {
-      const dist = camera.position.distanceTo(item.mesh.getWorldPosition(new THREE.Vector3()));
+      item.mesh.getWorldPosition(lodWorldPos.current);
+      const dist = camera.position.distanceTo(lodWorldPos.current);
       const shouldShow = dist <= item.maxDist;
       if (item.mesh.visible !== shouldShow) {
         item.mesh.visible = shouldShow;
@@ -369,7 +390,7 @@ function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded 
       <primitive object={scene} />
     </group>
   );
-}
+});
 
 function GroundPlane() {
   return (
@@ -415,27 +436,26 @@ function SceneSetup() {
     gl.toneMapping = THREE.ACESFilmicToneMapping;
     gl.toneMappingExposure = 1.05;
     gl.outputColorSpace = THREE.SRGBColorSpace;
-    gl.physicallyCorrectLights = true;
+    // physicallyCorrectLights removed in modern Three — lighting is PBR by default
   }, [gl]);
   return null;
 }
 
 function StudioEnvironment({ isMobile }: { isMobile?: boolean }) {
+  const resolution = isMobile ? 256 : 512;
   return (
-    <>
-      <Environment
-        files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr"
-        background={false}
-        resolution={isMobile ? 256 : 512}
-        frames={1}
-      />
-      <Environment frames={1} resolution={isMobile ? 256 : 512} background={false}>
-        <Lightformer intensity={3.5} position={[0, 6, 0]} scale={[12, 2, 2]} />
-        <Lightformer intensity={2.2} position={[5, 2.5, 3]} rotation={[0, -Math.PI / 4, 0]} scale={[3, 1, 1]} />
-        <Lightformer intensity={1.8} position={[-5, 2.5, -3]} rotation={[0, Math.PI / 4, 0]} scale={[3, 1, 1]} />
-        <Lightformer intensity={1.2} position={[0, 1.3, -8]} rotation={[0, Math.PI, 0]} scale={[8, 2, 1]} />
-      </Environment>
-    </>
+    <Environment
+      files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr"
+      background={false}
+      resolution={resolution}
+      frames={1}
+      environmentIntensity={isMobile ? 0.92 : 1.06}
+    >
+      <Lightformer intensity={3.2} position={[0, 6, 0]} scale={[12, 2, 2]} />
+      <Lightformer intensity={2.0} position={[5, 2.5, 3]} rotation={[0, -Math.PI / 4, 0]} scale={[3, 1, 1]} />
+      <Lightformer intensity={1.7} position={[-5, 2.5, -3]} rotation={[0, Math.PI / 4, 0]} scale={[3, 1, 1]} />
+      <Lightformer intensity={1.1} position={[0, 1.3, -8]} rotation={[0, Math.PI, 0]} scale={[8, 2, 1]} />
+    </Environment>
   );
 }
 
@@ -611,7 +631,7 @@ function LoadingOverlay({ isMobile }: { isMobile?: boolean }) {
   );
 }
 
-interface CenterCanvasProps {
+export interface CenterCanvasProps {
   selectedWrap: Wrap;
   carFile: string;
   carLabel: string;
@@ -647,7 +667,7 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
   }, []);
 
   useEffect(() => {
-    useGLTF.preload(carFile);
+    useGLTF.preload(carFile, true, true, extendCarGltfLoader);
   }, [carFile]);
 
   return (
