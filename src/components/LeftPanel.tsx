@@ -7,11 +7,6 @@ import ExhaustCard from './ExhaustCard';
 import TintCard from './TintCard';
 import type { Wrap, CarOption, TintOption } from '../types';
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
-import {
-  SUSPENSION_SLIDER_MAX,
-  SUSPENSION_SLIDER_MIN,
-  SUSPENSION_SLIDER_STEP,
-} from '../lib/configuratorConstants';
 
 function getSuspensionLabel(value: number): { text: string; brand: string; color: 'orange' | 'gray' } {
   if (value <= -0.2) return { text: 'SLAMMED', brand: 'Air Lift Performance 3P', color: 'orange' };
@@ -112,8 +107,7 @@ export default function LeftPanel({
 
   const label = useMemo(() => getSuspensionLabel(suspensionHeight), [suspensionHeight]);
 
-  const fillPercent =
-    ((suspensionHeight - SUSPENSION_SLIDER_MIN) / (SUSPENSION_SLIDER_MAX - SUSPENSION_SLIDER_MIN)) * 100;
+  const fillPercent = ((suspensionHeight - (-0.3)) / (0.3 - (-0.3))) * 100;
 
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar momentum-scroll pr-1">
@@ -247,13 +241,12 @@ export default function LeftPanel({
             <div className="relative">
               <input
                 type="range"
-                min={SUSPENSION_SLIDER_MIN}
-                max={SUSPENSION_SLIDER_MAX}
-                step={SUSPENSION_SLIDER_STEP}
+                min="-0.3"
+                max="0.3"
+                step="0.01"
                 value={suspensionHeight}
-                onInput={(e) => onSuspensionChange(parseFloat((e.target as HTMLInputElement).value))}
                 onChange={(e) => onSuspensionChange(parseFloat(e.target.value))}
-                className="w-full h-2 rounded-full appearance-none cursor-pointer suspension-slider relative z-10 touch-pan-y"
+                className="w-full h-2 rounded-full appearance-none cursor-pointer suspension-slider relative z-10"
                 style={{
                   background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${fillPercent}%, var(--bg-input) ${fillPercent}%, var(--bg-input) 100%)`,
                 }}

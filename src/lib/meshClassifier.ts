@@ -2,16 +2,12 @@ import * as THREE from 'three';
 
 export type MeshClassification = 'body' | 'glass' | 'tire' | 'rim' | 'light' | 'exhaust' | 'interior';
 
-const GLASS_NAMES = ['glass', 'window', 'windshield', 'windscreen', 'wind', 'screen', 'visor', 'shield', 'crystal', 'lens', 'light_glass', 'quarterglass', 'door_glass'];
+const GLASS_NAMES = ['glass', 'window', 'windshield', 'wind', 'screen', 'visor', 'shield', 'crystal', 'lens', 'light_glass'];
 const TIRE_NAMES = ['tire', 'tyre', 'rubber', 'wheel_rubber', 'tread'];
 const RIM_NAMES = ['rim', 'wheel', 'spoke', 'hub', 'brake', 'caliper', 'disc', 'rotor', 'alloy'];
 const LIGHT_NAMES = ['light', 'lamp', 'headlight', 'taillight', 'indicator', 'blinker', 'led'];
 const EXHAUST_NAMES = ['exhaust', 'pipe', 'muffler', 'tip'];
-const INTERIOR_NAMES = [
-  'interior', 'seat', 'dash', 'dashboard', 'steering', 'wheel', 'cockpit', 'cabin',
-  'floor', 'carpet', 'console', 'trim', 'panel', 'doorpanel', 'door_panel', 'upholstery',
-  'headrest', 'armrest', 'liner', 'headliner'
-];
+const INTERIOR_NAMES = ['interior', 'seat', 'dash', 'steering', 'cockpit', 'cabin', 'floor', 'carpet'];
 const BODY_PRIORITY_NAMES = ['roof', 'sunroof', 'hood', 'fender', 'bumper', 'trunk', 'tailgate', 'body', 'quarterpanel', 'quarter_panel', 'pillar'];
 const WINDOW_EXCEPTIONS = ['windshield', 'windscreen', 'window', 'doorglass', 'sideglass', 'backlight', 'rearglass', 'rear_glass', 'front_glass'];
 

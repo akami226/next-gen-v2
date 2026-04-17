@@ -4,11 +4,6 @@ import { CircleDot, Disc3, ArrowDownUp, AudioLines, PanelTop, RotateCcw, StopCir
 import SectionLabel from './SectionLabel';
 import TintCard from './TintCard';
 import type { Wrap, CarOption, TintOption } from '../types';
-import {
-  SUSPENSION_SLIDER_MAX,
-  SUSPENSION_SLIDER_MIN,
-  SUSPENSION_SLIDER_STEP,
-} from '../lib/configuratorConstants';
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
 import { formatPrice } from '../data/pricing';
 
@@ -124,8 +119,7 @@ export default function MobileModTabs({
   }, [playingExhaustIndex, isPlaying, exhaustOptions, stopAudio]);
 
   const label = useMemo(() => getSuspensionLabel(suspensionHeight), [suspensionHeight]);
-  const fillPercent =
-    ((suspensionHeight - SUSPENSION_SLIDER_MIN) / (SUSPENSION_SLIDER_MAX - SUSPENSION_SLIDER_MIN)) * 100;
+  const fillPercent = ((suspensionHeight - (-0.3)) / (0.3 - (-0.3))) * 100;
 
   return (
     <div className="bg-white/[0.03] border-t border-white/[0.06]">
@@ -326,13 +320,12 @@ export default function MobileModTabs({
               <div className="px-1">
                 <input
                   type="range"
-                  min={SUSPENSION_SLIDER_MIN}
-                  max={SUSPENSION_SLIDER_MAX}
-                  step={SUSPENSION_SLIDER_STEP}
+                  min="-0.3"
+                  max="0.3"
+                  step="0.01"
                   value={suspensionHeight}
-                  onInput={(e) => onSuspensionChange(parseFloat((e.target as HTMLInputElement).value))}
                   onChange={(e) => onSuspensionChange(parseFloat(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer suspension-slider touch-pan-y"
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer suspension-slider"
                   style={{
                     background: `linear-gradient(to right, var(--accent) 0%, var(--accent) ${fillPercent}%, var(--bg-input) ${fillPercent}%, var(--bg-input) 100%)`,
                   }}

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect, type ComponentProps 
 import Header from './components/Header';
 import { SEO_CONFIGS } from './hooks/useSEO';
 import LeftPanel from './components/LeftPanel';
-import CenterCanvasLazy from './components/CenterCanvasLazy';
+import CenterCanvas from './components/CenterCanvas';
 import RightPanel from './components/RightPanel';
 import MobileCarSelector from './components/MobileCarSelector';
 import MobileModTabs from './components/MobileModTabs';
@@ -78,7 +78,7 @@ const DEFAULT_WRAP_INDEX = 0;
 function App() {
   const { route, navigate } = useHashRoute();
   const { isMobile, isTablet } = useBreakpoint();
-  const { user, loading: authLoading, isShopOwner, shopOwnerData, signUp, signIn, signOut, resetPassword, refreshShopOwner } = useAuth();
+  const { user, isShopOwner, shopOwnerData, signUp, signIn, signOut, resetPassword, refreshShopOwner } = useAuth();
   const { notifications, toast, markRead, markAllRead, deleteNotification, dismissToast } = useNotifications(isShopOwner);
   const [authenticated, setAuthenticated] = useState(false);
   const [selectedCarIndex, setSelectedCarIndex] = useState(0);
@@ -90,27 +90,6 @@ function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const wraps = data.wraps as Wrap[];
-
-  const requiresAuth = useCallback((r: string) => {
-    if (r === '/my-builds') return true;
-    if (r === '/dashboard' || r.startsWith('/dashboard?')) return true;
-    if (r === '/dashboard/preview') return true;
-    return false;
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user || !requiresAuth(route)) return;
-    navigate('/auth');
-  }, [authLoading, user, route, navigate, requiresAuth]);
-
-  useEffect(() => {
-    if (!route.startsWith('/shop/')) return;
-    const shopId = route.replace('/shop/', '');
-    if (!shops.find((s) => s.id === shopId)) {
-      navigate('/configurator');
-    }
-  }, [route, navigate]);
 
   useEffect(() => {
     if (route === '/configurator' || (route !== '/' && route !== '' && !route.startsWith('/about') && !route.startsWith('/contact') && !route.startsWith('/auth') && !route.startsWith('/register') && !route.startsWith('/pricing') && !route.startsWith('/my-builds') && !route.startsWith('/dashboard') && !route.startsWith('/shop/') && !route.startsWith('/admin'))) {
@@ -257,7 +236,6 @@ function App() {
         }}
         onSignIn={async (email, password) => {
           const result = await signIn(email, password);
-          await refreshShopOwner(result.user.id);
           const { supabase } = await import('./lib/supabase');
           const { data: ownerCheck } = await supabase
             .from('shop_owners')
@@ -273,10 +251,8 @@ function App() {
   }
 
   if (route === '/my-builds') {
-    if (authLoading) {
-      return <AuthLoadingShell />;
-    }
     if (!user) {
+      navigate('/auth');
       return null;
     }
     return (
@@ -304,10 +280,8 @@ function App() {
   }
 
   if (route === '/dashboard/preview') {
-    if (authLoading) {
-      return <AuthLoadingShell />;
-    }
     if (!user) {
+      navigate('/auth');
       return null;
     }
     const demoShop = shops[0];
@@ -330,10 +304,8 @@ function App() {
   }
 
   if (route === '/dashboard' || route.startsWith('/dashboard?')) {
-    if (authLoading) {
-      return <AuthLoadingShell />;
-    }
     if (!user) {
+      navigate('/auth');
       return null;
     }
     const demoShop = shops[0];
@@ -364,18 +336,19 @@ function App() {
   if (route.startsWith('/shop/')) {
     const shopId = route.replace('/shop/', '');
     const shop = shops.find(s => s.id === shopId);
-    if (!shop) {
-      return null;
+    if (shop) {
+      return (
+        <ShopProfilePage
+          shop={shop}
+          buildConfig={buildConfig}
+          user={user}
+          onBack={() => navigate('/configurator')}
+          onNavigateAuth={() => navigate('/auth')}
+        />
+      );
     }
-    return (
-      <ShopProfilePage
-        shop={shop}
-        buildConfig={buildConfig}
-        user={user}
-        onBack={() => navigate('/configurator')}
-        onNavigateAuth={() => navigate('/auth')}
-      />
-    );
+    navigate('/configurator');
+    return null;
   }
 
   const selectedCar = cars[selectedCarIndex];
@@ -427,16 +400,16 @@ function App() {
   if (isMobile) {
     return (
       <>
-        <div className="h-[100dvh] min-h-0 w-full max-w-[100vw] bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden font-sans antialiased">
+        <div className="h-screen w-screen bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden font-sans antialiased">
           <Header {...headerProps} />
-          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden momentum-scroll">
+          <div className="flex-1 min-h-0 overflow-y-auto momentum-scroll">
             <MobileCarSelector
               cars={cars}
               selectedCarIndex={selectedCarIndex}
               onCarChange={handleCarChange}
             />
             <div className="px-3 py-3">
-              <CenterCanvasLazy {...canvasProps} isMobile />
+              <CenterCanvas {...canvasProps} isMobile />
             </div>
             <div className="px-3 pb-3 flex justify-center">
               {actionsBar}
@@ -446,7 +419,7 @@ function App() {
               <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
             </div>
           </div>
-          <div className="shrink-0 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] border-t border-white/[0.06] dark:border-white/[0.06] light:border-black/[0.08]">
+          <div className="shrink-0 px-3 py-2 bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] border-t border-white/[0.06]">
             {costPanel}
           </div>
         </div>
@@ -458,28 +431,28 @@ function App() {
   if (isTablet) {
     return (
       <>
-        <div className="h-[100dvh] min-h-0 w-full max-w-[100vw] bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden overflow-x-hidden font-sans antialiased">
+        <div className="h-screen w-screen bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden font-sans antialiased">
           <Header {...headerProps} />
-          <div className="flex-1 flex gap-2 sm:gap-3 p-2 sm:p-3 min-h-0">
-            <div className="w-[min(42%,20rem)] min-w-[11rem] max-w-[45%] overflow-y-auto custom-scrollbar momentum-scroll">
+          <div className="flex-1 flex gap-3 p-3 min-h-0">
+            <div className="w-[40%] min-w-0 overflow-y-auto custom-scrollbar momentum-scroll">
               <LeftPanel
                 {...modProps}
                 onCarChange={handleCarChange}
               />
             </div>
-            <div className="flex-1 min-w-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar momentum-scroll">
-                <div className="min-h-[45vh] sm:min-h-[50vh] relative">
-                  <CenterCanvasLazy {...canvasProps} />
-                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20">
+            <div className="w-[60%] min-w-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar momentum-scroll">
+                <div className="min-h-[50vh] relative">
+                  <CenterCanvas {...canvasProps} />
+                  <div className="absolute top-3 right-3 z-20">
                     {actionsBar}
                   </div>
                 </div>
-                <div className="pt-2 sm:pt-3 px-1">
+                <div className="pt-3">
                   <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
                 </div>
               </div>
-              <div className="shrink-0 pt-2 sm:pt-3">{costPanel}</div>
+              <div className="shrink-0 pt-3">{costPanel}</div>
             </div>
           </div>
         </div>
@@ -490,42 +463,31 @@ function App() {
 
   return (
     <>
-      <div className="h-[100dvh] min-h-0 w-full max-w-[100vw] bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden overflow-x-hidden font-sans antialiased">
+      <div className="h-screen w-screen bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex flex-col overflow-hidden font-sans antialiased">
         <Header user={user} isShopOwner={isShopOwner} profilePictureUrl={shopOwnerData?.profile_picture_url} onSignOut={handleSignOut} notifications={notifications} onMarkRead={markRead} onMarkAllRead={markAllRead} onViewAllNotifications={handleViewAllNotifications} onClickNotification={handleClickNotification} />
-        <div className="flex-1 flex gap-3 lg:gap-4 p-3 lg:p-4 min-h-0">
-          <div className="w-[22%] min-w-[12rem] max-w-[28%] xl:max-w-none xl:w-1/4">
+        <div className="flex-1 flex gap-4 p-4 min-h-0">
+          <div className="w-1/4 min-w-0">
             <LeftPanel
               {...modProps}
               onCarChange={handleCarChange}
             />
           </div>
-          <div className="flex-1 min-w-0 flex flex-col">
+          <div className="w-1/2 min-w-0 flex flex-col">
             <div className="flex-1 relative min-h-0">
-              <CenterCanvasLazy {...canvasProps} />
-              <div className="absolute top-2 right-2 lg:top-3 lg:right-3 z-20">
+              <CenterCanvas {...canvasProps} />
+              <div className="absolute top-3 right-3 z-20">
                 {actionsBar}
               </div>
             </div>
-            <div className="shrink-0 pt-2 lg:pt-3">{costPanel}</div>
+            <div className="shrink-0 pt-3">{costPanel}</div>
           </div>
-          <div className="w-[22%] min-w-[12rem] max-w-[28%] xl:max-w-none xl:w-1/4">
+          <div className="w-1/4 min-w-0">
             <RightPanel shops={shops} buildConfig={buildConfig} onNavigateShop={handleNavigateShop} />
           </div>
         </div>
       </div>
       {isShopOwner && <NotificationToast notification={toast} onDismiss={dismissToast} />}
     </>
-  );
-}
-
-function AuthLoadingShell() {
-  return (
-    <div className="h-screen w-screen bg-[#080808] dark:bg-[#080808] light:bg-[#f0f0f2] flex items-center justify-center font-sans">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-7 h-7 border-2 border-[#FF4500] light:border-[#2563EB] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-white/40 light:text-gray-500">Checking your session…</p>
-      </div>
-    </div>
   );
 }
 

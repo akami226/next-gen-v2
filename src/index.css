@@ -387,7 +387,18 @@ body {
 
 .light .solid-dropdown {
   background-color: #ffffff !important;
-  border-color: #e5e7eb !important;
+  border-color: #E5E7EB !important;
+}
+
+.light .solid-dropdown a,
+.light .solid-dropdown button {
+  color: #555555 !important;
+}
+
+.light .solid-dropdown a:hover,
+.light .solid-dropdown button:hover {
+  background-color: #F3F4F6 !important;
+  color: #111111 !important;
 }
 
 .light .solid-dropdown [class*="h-px"] {
@@ -758,11 +769,9 @@ button, a, input, textarea, select, [role="button"] {
 
 /* ========== LIGHT MODE: NOTIFICATION BELL DROPDOWN ========== */
 
-.light .solid-dropdown .text-white\/80 { color: #111111 !important; }
-.light .solid-dropdown .text-white\/50 { color: #4b5563 !important; }
-.light .solid-dropdown .text-white\/30 { color: #6b7280 !important; }
-.light .solid-dropdown .text-white\/25 { color: #6b7280 !important; }
-.light .solid-dropdown .text-white\/10 { color: #9ca3af !important; }
+.light .solid-dropdown .text-white\/80 { color: #1a1a1a !important; }
+.light .solid-dropdown .text-white\/30 { color: #888888 !important; }
+.light .solid-dropdown .text-white\/25 { color: #999999 !important; }
 .light .solid-dropdown .border-white\/\[0\.06\] { border-color: #E5E7EB !important; }
 .light .solid-dropdown .border-white\/\[0\.04\] { border-color: #F3F4F6 !important; }
 .light .solid-dropdown .bg-white\/\[0\.02\] { background-color: #F9FAFB !important; }

@@ -47,7 +47,7 @@ export default function Header({ user, isShopOwner, profilePictureUrl, onSignOut
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="relative flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.06] dark:border-white/[0.06] light:border-black/[0.08] z-40 bg-[#080808]/90 dark:bg-[#080808]/90 light:bg-[#f0f0f2]/95 backdrop-blur-md supports-[backdrop-filter]:bg-[#080808]/75 dark:supports-[backdrop-filter]:bg-[#080808]/75 light:supports-[backdrop-filter]:bg-[#f0f0f2]/85 isolate"
+      className="relative flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/[0.06] dark:border-white/[0.06] light:border-black/[0.08] z-40"
     >
       <a href="#/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
         <div className="w-9 h-9 rounded-xl bg-[#FF4500]/15 flex items-center justify-center">
@@ -183,9 +183,9 @@ function DesktopNav({
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                initial={{ y: -6, scale: 0.98 }}
-                animate={{ y: 0, scale: 1 }}
-                exit={{ y: -4, scale: 0.98 }}
+                initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
                 className="absolute top-full right-0 mt-2 w-52 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
               >
@@ -283,9 +283,8 @@ function MobileMenu({
   onSignOut?: () => void;
 }) {
   return (
-    <div ref={menuRef} className="relative">
+    <div ref={menuRef}>
       <button
-        type="button"
         onClick={() => setMenuOpen(!menuOpen)}
         className="w-10 h-10 rounded-xl bg-white/[0.04] dark:bg-white/[0.04] light:bg-black/[0.04] border border-white/[0.08] dark:border-white/[0.08] light:border-black/[0.08] flex items-center justify-center text-white/50 dark:text-white/50 light:text-gray-500 active:bg-white/[0.08] dark:active:bg-white/[0.08] light:active:bg-black/[0.06] transition-colors"
       >
@@ -295,11 +294,11 @@ function MobileMenu({
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            initial={{ y: -10, scale: 0.97 }}
-            animate={{ y: 0, scale: 1 }}
-            exit={{ y: -8, scale: 0.97 }}
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full right-0 mt-2 w-[min(100vw-2rem,14rem)] sm:w-56 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
+            className="absolute top-full right-4 mt-2 w-56 rounded-xl overflow-hidden z-[9999] solid-dropdown bg-[#1a1a1a] dark:bg-[#1a1a1a] light:bg-white"
           >
             <nav className="py-2">
               {user ? (

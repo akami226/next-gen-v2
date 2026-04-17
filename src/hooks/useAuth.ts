@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
@@ -31,8 +31,6 @@ export function useAuth() {
     shopOwnerData: null,
   });
 
-  const authRequestId = useRef(0);
-
   const fetchShopOwner = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from('shop_owners')
@@ -43,48 +41,39 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const applySignedOut = () => {
-      if (cancelled) return;
-      setState({ user: null, session: null, loading: false, isShopOwner: false, shopOwnerData: null });
-    };
-
-    const applySignedIn = async (session: Session, requestId: number) => {
-      const shopData = await fetchShopOwner(session.user.id);
-      if (cancelled || requestId !== authRequestId.current) return;
-      setState({
-        user: session.user,
-        session,
-        loading: false,
-        isShopOwner: !!shopData,
-        shopOwnerData: shopData,
-      });
-    };
-
-    const handleSession = (session: Session | null) => {
-      if (cancelled) return;
-      const requestId = ++authRequestId.current;
-      if (!session?.user) {
-        applySignedOut();
-        return;
-      }
-      void applySignedIn(session, requestId);
-    };
-
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      handleSession(session);
+      if (session?.user) {
+        fetchShopOwner(session.user.id).then((shopData) => {
+          setState({
+            user: session.user,
+            session,
+            loading: false,
+            isShopOwner: !!shopData,
+            shopOwnerData: shopData,
+          });
+        });
+      } else {
+        setState({ user: null, session: null, loading: false, isShopOwner: false, shopOwnerData: null });
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleSession(session);
+      if (session?.user) {
+        fetchShopOwner(session.user.id).then((shopData) => {
+          setState({
+            user: session.user,
+            session,
+            loading: false,
+            isShopOwner: !!shopData,
+            shopOwnerData: shopData,
+          });
+        });
+      } else {
+        setState({ user: null, session: null, loading: false, isShopOwner: false, shopOwnerData: null });
+      }
     });
 
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [fetchShopOwner]);
 
   const signUp = useCallback(async (name: string, email: string, password: string) => {
@@ -100,17 +89,11 @@ export function useAuth() {
     if (error) throw error;
 
     if (data.user) {
-      const { error: profileError } = await supabase.from('user_profiles').upsert(
-        {
-          id: data.user.id,
-          display_name: name,
-          email,
-        },
-        { onConflict: 'id' }
-      );
-      if (profileError && !String(profileError.message).toLowerCase().includes('duplicate')) {
-        throw profileError;
-      }
+      await supabase.from('user_profiles').insert({
+        id: data.user.id,
+        display_name: name,
+        email,
+      });
     }
 
     // Sign out so the unverified session doesn't persist
@@ -143,10 +126,9 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
-  const refreshShopOwner = useCallback(async (userId?: string) => {
-    const id = userId ?? state.user?.id;
-    if (!id) return;
-    const shopData = await fetchShopOwner(id);
+  const refreshShopOwner = useCallback(async () => {
+    if (!state.user) return;
+    const shopData = await fetchShopOwner(state.user.id);
     setState((prev) => ({
       ...prev,
       isShopOwner: !!shopData,
