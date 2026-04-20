@@ -1,14 +1,67 @@
-import { Suspense, useEffect, useRef, useState, useCallback } from 'react';
+import { Suspense, useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, useProgress } from '@react-three/drei';
+import { OrbitControls, useGLTF, Environment, useProgress, Lightformer, AdaptiveDpr } from '@react-three/drei';
 import { EffectComposer, Bloom, N8AO, ToneMapping } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { Wrap, TintOption } from '../types';
 import { scanAndClassify, type MeshClassification } from '../lib/meshClassifier';
 import { createWrapMaterial, getPermanentMaterial, createTintMaterial, createRimMaterialForWheel } from '../lib/carMaterials';
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
+import { SUSPENSION_SLIDER_MAX, SUSPENSION_SLIDER_MIN } from '../lib/configuratorConstants';
+
+function getWrapKey(wrap: Wrap): string {
+  return [
+    wrap.brand,
+    wrap.name,
+    wrap.hex,
+    wrap.roughness,
+    wrap.metalness,
+    wrap.clearcoat ?? '',
+    wrap.clearcoatRoughness ?? '',
+    wrap.iridescence ?? '',
+    wrap.iridescenceIOR ?? '',
+    wrap.reflectivity ?? '',
+    wrap.envMapIntensity ?? '',
+    wrap.materialType,
+  ].join('|');
+}
+
+/** KTX2 + Draco/Meshopt — same hook used by `useGLTF.preload`. */
+function extendCarGltfLoader(loader: object) {
+  const gltfLoader = loader as {
+    manager: THREE.LoadingManager;
+    setKTX2Loader: (ktx2: KTX2Loader) => void;
+  };
+  const renderer = (window as unknown as { __R3F_GL__?: THREE.WebGLRenderer }).__R3F_GL__;
+  if (!renderer) return;
+  try {
+    const ktx2 = new KTX2Loader(gltfLoader.manager)
+      .setTranscoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/basis/')
+      .detectSupport(renderer);
+    gltfLoader.setKTX2Loader(ktx2);
+  } catch {
+    /* Basis transcoder may fail in restricted contexts */
+  }
+}
+
+function shouldTreatGlassAsBody(mesh: THREE.Mesh): boolean {
+  const meshName = (mesh.name ?? '').toLowerCase();
+  const mat = mesh.material as THREE.Material | undefined;
+  const matName = (mat?.name ?? '').toLowerCase();
+  const combined = `${meshName} ${matName}`;
+
+  // Some car files name painted roof panels with "glass"/"window" terms.
+  // Keep windshield/side/rear windows as tintable glass, but force roof panels to wrap.
+  // Keep this strict: broad tokens like "top"/"upper" were mislabeling real windows
+  // as body on some cars, which made glass opaque and hid seats/steering.
+  const roofLike = /(^|[\s_])(roof|sunroof|roofpanel|roof_panel|roofskin|roof_skin|body_sedan)([\s_]|$)/.test(combined);
+  const explicitWindow = /windshield|windscreen|window|doorglass|sideglass|side_glass|backlight|rearglass|rear_glass/.test(combined);
+  return roofLike && !explicitWindow;
+}
 
 function FadeWrapper({ children, carFile }: { children: React.ReactNode; carFile: string }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -63,16 +116,15 @@ function FadeWrapper({ children, carFile }: { children: React.ReactNode; carFile
   return <group ref={groupRef}>{children}</group>;
 }
 
-function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex, onLoaded }: {
+const CarModel = memo(function CarModel({ wrap, carFile, suspensionHeight, tint, wheelIndex, onLoaded }: {
   wrap: Wrap;
   carFile: string;
-  carLabel: string;
   suspensionHeight: number;
   tint: TintOption;
   wheelIndex: number;
   onLoaded: () => void;
 }) {
-  const { scene } = useGLTF(carFile);
+  const { scene } = useGLTF(carFile, true, true, extendCarGltfLoader);
   const classified = useRef<Map<THREE.Mesh, MeshClassification>>(new Map());
   const lastClassifiedFile = useRef('');
   const permanentApplied = useRef(false);
@@ -80,7 +132,10 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
   const currentYOffset = useRef(0);
   const glassMaterials = useRef<THREE.MeshPhysicalMaterial[]>([]);
   const rimMeshes = useRef<THREE.Mesh[]>([]);
+  const rimBaseScale = useRef<Map<THREE.Mesh, THREE.Vector3>>(new Map());
+  const rimBaseGeometry = useRef<Map<THREE.Mesh, THREE.BufferGeometry>>(new Map());
   const bodyMeshes = useRef<THREE.Mesh[]>([]);
+  const suspensionRange = useRef(0.14);
   const targetTintTransmission = useRef(Math.max(0.05, 1.0 - tint.material.opacity));
   const targetTintColor = useRef(new THREE.Color(tint.material.opacity <= 0.12 ? '#87CEEB' : tint.material.color));
   // Cached shared materials — one instance per wrap/rim/tint key, cloned only per-mesh
@@ -88,7 +143,9 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
   const rimMatCache = useRef<{ key: number; mat: THREE.MeshPhysicalMaterial } | null>(null);
   const tintAnimating = useRef(false);
   const suspAnimating = useRef(false);
-  const { invalidate } = useThree();
+  const { invalidate, camera } = useThree();
+  const lodBuckets = useRef<{ mesh: THREE.Mesh; maxDist: number }[]>([]);
+  const lodWorldPos = useRef(new THREE.Vector3());
 
   if (lastClassifiedFile.current !== carFile) {
     lastClassifiedFile.current = carFile;
@@ -96,10 +153,14 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     currentYOffset.current = 0;
     glassMaterials.current = [];
     rimMeshes.current = [];
+    rimBaseScale.current.clear();
+    rimBaseGeometry.current.clear();
     bodyMeshes.current = [];
+    suspensionRange.current = 0.14;
     wrapMatCache.current = null;
     rimMatCache.current = null;
-    classified.current = scanAndClassify(scene, carLabel);
+    lodBuckets.current = [];
+    classified.current = scanAndClassify(scene);
   }
 
   useEffect(() => {
@@ -116,8 +177,15 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     const rims: THREE.Mesh[] = [];
     const bodies: THREE.Mesh[] = [];
     classified.current.forEach((type, mesh) => {
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = true;
+
       if (type === 'body') { bodies.push(mesh); return; }
-      if (type === 'glass') return;
+      if (type === 'glass') {
+        if (shouldTreatGlassAsBody(mesh)) bodies.push(mesh);
+        return;
+      }
       if (type === 'rim') { rims.push(mesh); return; }
       const mat = getPermanentMaterial(type);
       if (mat) {
@@ -127,12 +195,37 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     });
     rimMeshes.current = rims;
     bodyMeshes.current = bodies;
+    rims.forEach((mesh) => {
+      rimBaseScale.current.set(mesh, mesh.scale.clone());
+      const baseGeometry = mesh.geometry.clone();
+      baseGeometry.computeVertexNormals();
+      rimBaseGeometry.current.set(mesh, baseGeometry);
+      mesh.geometry = baseGeometry.clone();
+    });
+
+    const bounds = new THREE.Box3().setFromObject(scene);
+    const size = bounds.getSize(new THREE.Vector3());
+    const carScale = Math.max(size.x, size.y, size.z);
+    const smallPartDist = carScale * 2.0;
+    const tinyPartDist = carScale * 1.4;
+    scene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
+      const meshType = classified.current.get(child);
+      // Never distance-cull interior/glass/lights: some car files split cabin into many
+      // tiny meshes, and culling them removes seats/steering at normal camera distances.
+      if (meshType === 'interior' || meshType === 'glass' || meshType === 'light') return;
+      if (!child.geometry.boundingSphere) child.geometry.computeBoundingSphere();
+      const radius = child.geometry.boundingSphere?.radius ?? 0;
+      if (radius < 0.03) lodBuckets.current.push({ mesh: child, maxDist: tinyPartDist });
+      else if (radius < 0.06) lodBuckets.current.push({ mesh: child, maxDist: smallPartDist });
+    });
+    suspensionRange.current = Math.max(0.1, Math.min(0.2, size.y * 0.22));
     permanentApplied.current = true;
 
     // Step 2: apply current wrap
     wrapMatCache.current = null;
     const wrapMat = createWrapMaterial(wrap);
-    wrapMatCache.current = { key: `${wrap.hex}-${wrap.roughness}-${wrap.metalness}-${wrap.clearcoat ?? ''}-${wrap.iridescence ?? ''}`, mat: wrapMat };
+    wrapMatCache.current = { key: getWrapKey(wrap), mat: wrapMat };
     bodies.forEach((mesh) => {
       mesh.material = wrapMat.clone();
     });
@@ -150,7 +243,7 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     tintMat.userData.keepTransparent = true;
     const glassMats: THREE.MeshPhysicalMaterial[] = [];
     classified.current.forEach((type, mesh) => {
-      if (type === 'glass') {
+      if (type === 'glass' && !shouldTreatGlassAsBody(mesh)) {
         const cloned = tintMat.clone();
         cloned.userData.keepTransparent = true;
         mesh.material = cloned;
@@ -169,7 +262,7 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
   // Apply wrap material whenever wrap changes (not on initial car load)
   useEffect(() => {
     if (!permanentApplied.current || bodyMeshes.current.length === 0) return;
-    const wrapKey = `${wrap.hex}-${wrap.roughness}-${wrap.metalness}-${wrap.clearcoat ?? ''}-${wrap.iridescence ?? ''}`;
+    const wrapKey = getWrapKey(wrap);
     if (wrapMatCache.current?.key === wrapKey) return;
     wrapMatCache.current?.mat.dispose();
     const wrapMat = createWrapMaterial(wrap);
@@ -184,12 +277,32 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
   // Apply rim material whenever wheelIndex changes
   useEffect(() => {
     if (!permanentApplied.current || rimMeshes.current.length === 0) return;
-    if (rimMatCache.current?.key === wheelIndex) return;
+    const clampedWheelIndex = Math.max(0, Math.min(wheelIndex, WHEEL_OPTIONS.length - 1));
+    if (rimMatCache.current?.key === clampedWheelIndex) return;
+
     rimMatCache.current?.mat.dispose();
-    const rimMat = createRimMaterialForWheel(WHEEL_OPTIONS[wheelIndex]);
-    rimMatCache.current = { key: wheelIndex, mat: rimMat };
+    const wheelOption = WHEEL_OPTIONS[clampedWheelIndex];
+    const rimMat = createRimMaterialForWheel(wheelOption);
+    rimMatCache.current = { key: clampedWheelIndex, mat: rimMat };
+
     rimMeshes.current.forEach((mesh) => {
       (mesh.material as THREE.Material).dispose?.();
+      const baseScale = rimBaseScale.current.get(mesh);
+      if (baseScale) {
+        const scale = THREE.MathUtils.clamp(wheelOption.transform?.scale ?? 1, 0.88, 1.12);
+        mesh.scale.set(baseScale.x * scale, baseScale.y * scale, baseScale.z * scale);
+      }
+
+      const baseGeometry = rimBaseGeometry.current.get(mesh);
+      if (baseGeometry) {
+        const profile = THREE.MathUtils.clamp(wheelOption.transform?.profile ?? 1, 0.9, 1.1);
+        const geom = baseGeometry.clone();
+        geom.scale(1, profile, 1);
+        geom.computeVertexNormals();
+        mesh.geometry.dispose();
+        mesh.geometry = geom;
+      }
+
       mesh.material = rimMat.clone();
     });
     invalidate();
@@ -202,7 +315,7 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     tintMat.userData.keepTransparent = true;
     const mats: THREE.MeshPhysicalMaterial[] = [];
     classified.current.forEach((type, mesh) => {
-      if (type === 'glass') {
+      if (type === 'glass' && !shouldTreatGlassAsBody(mesh)) {
         (mesh.material as THREE.Material).dispose?.();
         const cloned = tintMat.clone();
         cloned.userData.keepTransparent = true;
@@ -221,14 +334,16 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     invalidate();
   }, [suspensionHeight, invalidate]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     let needsFrame = false;
 
     if (suspAnimating.current && groupRef.current) {
-      const target = suspensionHeight * 0.5;
+      const norm = THREE.MathUtils.clamp(suspensionHeight, SUSPENSION_SLIDER_MIN, SUSPENSION_SLIDER_MAX);
+      const target = norm * suspensionRange.current;
       const diff = target - currentYOffset.current;
       if (Math.abs(diff) > 0.0001) {
-        currentYOffset.current += diff * 0.06;
+        const response = 1 - Math.exp(-12 * delta);
+        currentYOffset.current += diff * response;
         groupRef.current.position.y = currentYOffset.current;
         needsFrame = true;
       } else {
@@ -239,7 +354,7 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
     }
 
     if (tintAnimating.current) {
-      const lerpSpeed = 0.06;
+      const lerpSpeed = 1 - Math.exp(-8 * delta);
       let tintDone = true;
       for (const mat of glassMaterials.current) {
         const tDiff = targetTintTransmission.current - mat.transmission;
@@ -257,6 +372,16 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
       else needsFrame = true;
     }
 
+    for (const item of lodBuckets.current) {
+      item.mesh.getWorldPosition(lodWorldPos.current);
+      const dist = camera.position.distanceTo(lodWorldPos.current);
+      const shouldShow = dist <= item.maxDist;
+      if (item.mesh.visible !== shouldShow) {
+        item.mesh.visible = shouldShow;
+        needsFrame = true;
+      }
+    }
+
     if (needsFrame) invalidate();
   });
 
@@ -265,7 +390,7 @@ function CarModel({ wrap, carFile, carLabel, suspensionHeight, tint, wheelIndex,
       <primitive object={scene} />
     </group>
   );
-}
+});
 
 function GroundPlane() {
   return (
@@ -305,11 +430,33 @@ function GroundReflection() {
 function SceneSetup() {
   const { gl } = useThree();
   useEffect(() => {
+    THREE.ColorManagement.enabled = true;
     gl.shadowMap.enabled = true;
     gl.shadowMap.type = THREE.PCFSoftShadowMap;
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.toneMappingExposure = 1.05;
     gl.outputColorSpace = THREE.SRGBColorSpace;
+    // physicallyCorrectLights removed in modern Three — lighting is PBR by default
   }, [gl]);
   return null;
+}
+
+function StudioEnvironment({ isMobile }: { isMobile?: boolean }) {
+  const resolution = isMobile ? 256 : 512;
+  return (
+    <Environment
+      files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr"
+      background={false}
+      resolution={resolution}
+      frames={1}
+      environmentIntensity={isMobile ? 0.92 : 1.06}
+    >
+      <Lightformer intensity={3.2} position={[0, 6, 0]} scale={[12, 2, 2]} />
+      <Lightformer intensity={2.0} position={[5, 2.5, 3]} rotation={[0, -Math.PI / 4, 0]} scale={[3, 1, 1]} />
+      <Lightformer intensity={1.7} position={[-5, 2.5, -3]} rotation={[0, Math.PI / 4, 0]} scale={[3, 1, 1]} />
+      <Lightformer intensity={1.1} position={[0, 1.3, -8]} rotation={[0, Math.PI, 0]} scale={[8, 2, 1]} />
+    </Environment>
+  );
 }
 
 const DEFAULT_CAMERA_POS = new THREE.Vector3(5, 2.2, 5.5);
@@ -317,7 +464,7 @@ const DEFAULT_TARGET = new THREE.Vector3(0, 0.4, 0);
 
 function CameraControls({ isMobile, controlsRef }: {
   isMobile?: boolean;
-  controlsRef: React.MutableRefObject<any>;
+  controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
 }) {
   const lastTap = useRef(0);
   const { invalidate } = useThree();
@@ -484,7 +631,7 @@ function LoadingOverlay({ isMobile }: { isMobile?: boolean }) {
   );
 }
 
-interface CenterCanvasProps {
+export interface CenterCanvasProps {
   selectedWrap: Wrap;
   carFile: string;
   carLabel: string;
@@ -499,7 +646,7 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
   const [modelReady, setModelReady] = useState(false);
   const [showHint, setShowHint] = useState(!!isMobile);
   const prevFile = useRef(carFile);
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
   useEffect(() => {
     if (prevFile.current !== carFile) {
@@ -518,6 +665,10 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
   const handleLoaded = useCallback(() => {
     setModelReady(true);
   }, []);
+
+  useEffect(() => {
+    useGLTF.preload(carFile, true, true, extendCarGltfLoader);
+  }, [carFile]);
 
   return (
     <motion.div
@@ -575,11 +726,11 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
         className="absolute inset-0 z-10"
         onCreated={({ gl }) => {
           if (canvasRef) canvasRef.current = gl.domElement;
-          // Limit texture anisotropy to a sensible cap
-          gl.capabilities.getMaxAnisotropy();
+          (window as unknown as { __R3F_GL__?: THREE.WebGLRenderer }).__R3F_GL__ = gl;
         }}
       >
         <SceneSetup />
+        <AdaptiveDpr pixelated />
         <color attach="background" args={['#080a10']} />
         <fog attach="fog" args={['#080a10', 18, 50]} />
 
@@ -631,19 +782,13 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
         <pointLight position={[-5, 0.4, 2]} color="#0a1530" intensity={3} distance={12} decay={2} />
         <pointLight position={[5, 0.4, -2]} color="#200a02" intensity={2} distance={12} decay={2} />
 
-        <Environment
-          preset="studio"
-          environmentIntensity={1.0}
-          environmentRotation={[0, Math.PI / 3, 0]}
-          background={false}
-        />
+        <StudioEnvironment isMobile={isMobile} />
 
         <Suspense fallback={null}>
           <FadeWrapper carFile={carFile}>
             <CarModel
               wrap={selectedWrap}
               carFile={carFile}
-              carLabel={carLabel}
               suspensionHeight={suspensionHeight}
               tint={tint}
               wheelIndex={wheelIndex}

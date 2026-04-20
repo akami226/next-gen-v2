@@ -12,6 +12,10 @@ export const WHEEL_OPTIONS = [
       clearcoat: 0.6,
       clearcoatRoughness: 0.1,
     },
+    transform: {
+      scale: 1.0,
+      profile: 1.0,
+    },
   },
   {
     id: 'bbs',
@@ -25,6 +29,10 @@ export const WHEEL_OPTIONS = [
       envMapIntensity: 3.0,
       clearcoat: 1.0,
       clearcoatRoughness: 0.02,
+    },
+    transform: {
+      scale: 1.02,
+      profile: 0.98,
     },
   },
   {
@@ -40,6 +48,10 @@ export const WHEEL_OPTIONS = [
       clearcoat: 1.0,
       clearcoatRoughness: 0.02,
     },
+    transform: {
+      scale: 1.0,
+      profile: 1.02,
+    },
   },
   {
     id: 'work',
@@ -54,6 +66,10 @@ export const WHEEL_OPTIONS = [
       clearcoat: 0.7,
       clearcoatRoughness: 0.08,
     },
+    transform: {
+      scale: 1.01,
+      profile: 1.0,
+    },
   },
   {
     id: 'hre',
@@ -67,6 +83,10 @@ export const WHEEL_OPTIONS = [
       envMapIntensity: 1.8,
       clearcoat: 0.4,
       clearcoatRoughness: 0.15,
+    },
+    transform: {
+      scale: 0.99,
+      profile: 1.01,
     },
   },
 ];

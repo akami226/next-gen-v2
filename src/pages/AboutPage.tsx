@@ -91,8 +91,9 @@ const fade = {
   viewport: { once: true, margin: '-60px' },
 };
 
-export default function AboutPage({ onBack: _onBack, onStartConfiguring, onRegisterShop, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: AboutPageProps) {
+export default function AboutPage({ onBack, onStartConfiguring, onRegisterShop, user, isShopOwner, profilePictureUrl, onSignOut, notifications, onMarkRead, onMarkAllRead, onViewAllNotifications, onClickNotification }: AboutPageProps) {
   useSEO(SEO_CONFIGS.about);
+  void onBack;
 
   return (
     <div className="min-h-screen w-screen bg-[#080808] light:bg-[#F8F9FA] font-sans antialiased overflow-y-auto">
