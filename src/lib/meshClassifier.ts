@@ -63,26 +63,14 @@ function classifyByName(meshName: string, matName: string): MeshClassification |
   return null;
 }
 
+// Returns true only when the material has unambiguous glass properties.
+// Deliberately avoids roughness/metalness/color heuristics — those are
+// indistinguishable from smooth body panels in many automotive GLBs.
 function isGlassMaterial(mat: THREE.Material): boolean {
-  const std = mat as THREE.MeshStandardMaterial;
-  if (!std.color) return false;
-
-  const r = std.color.r;
-  const g = std.color.g;
-  const b = std.color.b;
-  const roughness = std.roughness ?? 0.5;
-  const metalness = std.metalness ?? 0;
-
-  // Physical transmission (GLB glass with PBR)
+  // Physical PBR glass: has actual light transmission
   if (mat instanceof THREE.MeshPhysicalMaterial && (mat as THREE.MeshPhysicalMaterial).transmission > 0.05) return true;
-  // Alpha transparency
-  if (mat.transparent && mat.opacity < 0.75) return true;
-  if (r > 0.6 && g > 0.6 && b > 0.6 && mat.transparent && mat.opacity < 0.85) return true;
-  // Smooth + non-metallic = glass or clear plastic (not painted metal, not rubber)
-  if (roughness < 0.25 && metalness < 0.12) return true;
-  // Dark + smooth + non-metallic = tinted window glass stored as opaque in the GLB
-  if (r < 0.12 && g < 0.12 && b < 0.12 && roughness < 0.45 && metalness < 0.12) return true;
-
+  // Alpha transparency set by the artist
+  if (mat.transparent && mat.opacity < 0.98) return true;
   return false;
 }
 
