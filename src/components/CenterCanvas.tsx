@@ -13,6 +13,11 @@ import { createWrapMaterial, getPermanentMaterial, createTintMaterial, createRim
 import { WHEEL_OPTIONS } from '../data/wheelOptions';
 import { SUSPENSION_SLIDER_MAX, SUSPENSION_SLIDER_MIN } from '../lib/configuratorConstants';
 
+interface ModelFitInfo {
+  size: THREE.Vector3;
+  sphere: THREE.Sphere;
+}
+
 function getWrapKey(wrap: Wrap): string {
   return [
     wrap.brand,
@@ -54,13 +59,25 @@ function shouldTreatGlassAsBody(mesh: THREE.Mesh): boolean {
   const matName = (mat?.name ?? '').toLowerCase();
   const combined = `${meshName} ${matName}`;
 
-  // Some car files name painted roof panels with "glass"/"window" terms.
-  // Keep windshield/side/rear windows as tintable glass, but force roof panels to wrap.
-  // Keep this strict: broad tokens like "top"/"upper" were mislabeling real windows
-  // as body on some cars, which made glass opaque and hid seats/steering.
-  const roofLike = /(^|[\s_])(roof|sunroof|roofpanel|roof_panel|roofskin|roof_skin|body_sedan)([\s_]|$)/.test(combined);
-  const explicitWindow = /windshield|windscreen|window|doorglass|sideglass|side_glass|backlight|rearglass|rear_glass/.test(combined);
-  return roofLike && !explicitWindow;
+  // Any mesh whose name explicitly contains 'glass' or 'window' is a real pane —
+  // keep it transparent UNLESS it is a panoramic/carbon roof panel.
+  if (combined.includes('glass') || combined.includes('window')) {
+    const isPanoramicRoof = /sunroof|panoram|carbon_roof|roof_glass/.test(combined);
+    return isPanoramicRoof;
+  }
+
+  // Roof panels that slipped through via other names follow the wrap colour
+  const roofLike = /roof|roofpanel|roof_panel|roofskin|roof_skin|body_sedan/.test(combined);
+  if (roofLike) return true;
+
+  // Exterior body panels with no glass reference (door alone = door shell, not window).
+  // Pillar, quarter, sill are intentionally excluded here: they can be glass panel names
+  // (A/B/C-pillar glass, quarter-light, sill trim with glass insert) and if a mesh was
+  // already classified as 'glass' we must not override it back to body paint.
+  const bodyPanel = /^(?!.*door).*(?:body|hood|bonnet|fender|trunk|tailgate|bumper|spoiler|skirt|apron)/.test(combined);
+  if (bodyPanel) return true;
+
+  return false;
 }
 
 function FadeWrapper({ children, carFile }: { children: React.ReactNode; carFile: string }) {
@@ -122,7 +139,7 @@ const CarModel = memo(function CarModel({ wrap, carFile, suspensionHeight, tint,
   suspensionHeight: number;
   tint: TintOption;
   wheelIndex: number;
-  onLoaded: () => void;
+  onLoaded: (fitInfo: ModelFitInfo) => void;
 }) {
   const { scene } = useGLTF(carFile, true, true, extendCarGltfLoader);
   const classified = useRef<Map<THREE.Mesh, MeshClassification>>(new Map());
@@ -203,8 +220,17 @@ const CarModel = memo(function CarModel({ wrap, carFile, suspensionHeight, tint,
       mesh.geometry = baseGeometry.clone();
     });
 
+    // Compute raw bounds, then normalize: center X/Z and ground Y=0
+    const rawBounds = new THREE.Box3().setFromObject(scene);
+    const rawCenter = rawBounds.getCenter(new THREE.Vector3());
+    scene.position.set(-rawCenter.x, -rawBounds.min.y, -rawCenter.z);
+
+    // Recompute after normalization for accurate LOD and camera fit
     const bounds = new THREE.Box3().setFromObject(scene);
     const size = bounds.getSize(new THREE.Vector3());
+    const sphere = new THREE.Sphere();
+    bounds.getBoundingSphere(sphere);
+
     const carScale = Math.max(size.x, size.y, size.z);
     const smallPartDist = carScale * 2.0;
     const tinyPartDist = carScale * 1.4;
@@ -254,7 +280,7 @@ const CarModel = memo(function CarModel({ wrap, carFile, suspensionHeight, tint,
     glassMaterials.current = glassMats;
     tintAnimating.current = false;
 
-    onLoaded();
+    onLoaded({ size, sphere });
     invalidate();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carFile]);
@@ -445,7 +471,7 @@ function StudioEnvironment({ isMobile }: { isMobile?: boolean }) {
   const resolution = isMobile ? 256 : 512;
   return (
     <Environment
-      files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr"
+      files="/studio_small_03_1k.hdr"
       background={false}
       resolution={resolution}
       frames={1}
@@ -457,6 +483,44 @@ function StudioEnvironment({ isMobile }: { isMobile?: boolean }) {
       <Lightformer intensity={1.1} position={[0, 1.3, -8]} rotation={[0, Math.PI, 0]} scale={[8, 2, 1]} />
     </Environment>
   );
+}
+
+function CameraFitter({
+  fitInfo,
+  controlsRef,
+  isMobile,
+}: {
+  fitInfo: ModelFitInfo;
+  controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
+  isMobile?: boolean;
+}) {
+  const { camera, invalidate } = useThree();
+
+  useEffect(() => {
+    const { size } = fitInfo;
+
+    // Every model is already normalized to world origin (centered X/Z, grounded Y).
+    // Use a fixed camera position so all three cars get identical framing.
+    // Mobile uses a slightly closer position to compensate for the wider FOV.
+    const pos = isMobile
+      ? new THREE.Vector3(
+          DEFAULT_CAMERA_POS.x * 0.8,
+          DEFAULT_CAMERA_POS.y * 0.8,
+          DEFAULT_CAMERA_POS.z * 0.8,
+        )
+      : DEFAULT_CAMERA_POS.clone();
+
+    camera.position.copy(pos);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, size.y * 0.35, 0);
+      controlsRef.current.update();
+    }
+    invalidate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitInfo]);
+
+  return null;
 }
 
 const DEFAULT_CAMERA_POS = new THREE.Vector3(5, 2.2, 5.5);
@@ -645,6 +709,7 @@ export interface CenterCanvasProps {
 export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensionHeight, tint, wheelIndex, isMobile, canvasRef }: CenterCanvasProps) {
   const [modelReady, setModelReady] = useState(false);
   const [showHint, setShowHint] = useState(!!isMobile);
+  const [modelFitInfo, setModelFitInfo] = useState<ModelFitInfo | null>(null);
   const prevFile = useRef(carFile);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
@@ -652,6 +717,7 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
     if (prevFile.current !== carFile) {
       prevFile.current = carFile;
       setModelReady(false);
+      setModelFitInfo(null);
     }
   }, [carFile]);
 
@@ -662,8 +728,9 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
     }
   }, [isMobile, showHint]);
 
-  const handleLoaded = useCallback(() => {
+  const handleLoaded = useCallback((fitInfo: ModelFitInfo) => {
     setModelReady(true);
+    setModelFitInfo(fitInfo);
   }, []);
 
   useEffect(() => {
@@ -801,6 +868,9 @@ export default function CenterCanvas({ selectedWrap, carFile, carLabel, suspensi
         </Suspense>
 
         <CameraControls isMobile={isMobile} controlsRef={controlsRef} />
+        {modelFitInfo && (
+          <CameraFitter fitInfo={modelFitInfo} controlsRef={controlsRef} isMobile={isMobile} />
+        )}
         <PostEffects isMobile={isMobile} />
       </Canvas>
 
