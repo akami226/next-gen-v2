@@ -114,6 +114,7 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
       if (profileError) throw profileError;
 
       const { error: regError } = await supabase.from('shop_registrations').insert({
+        user_id: authData.user.id,
         shop_name: form.shopName,
         owner_name: form.fullName,
         email: form.shopEmail || form.email,
@@ -131,6 +132,7 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
         tiktok: form.tiktok || null,
         twitter: form.twitter || null,
         whatsapp: form.whatsapp || null,
+        status: 'pending',
       });
       if (regError) {
         const dup =
@@ -145,28 +147,7 @@ export default function RegisterPage({ onComplete }: RegisterPageProps) {
         await supabase.auth.signOut();
         return;
       }
-
-      const { error: ownerError } = await supabase.from('shop_owners').insert({
-        user_id: authData.user.id,
-        shop_id: form.shopName.toLowerCase().replace(/\s+/g, '-'),
-        shop_name: form.shopName,
-        plan: 'Starter',
-        plan_price: 0,
-        next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      });
-      if (ownerError) {
-        const dup =
-          ownerError.code === '23505' ||
-          ownerError.message?.toLowerCase().includes('duplicate') ||
-          ownerError.message?.toLowerCase().includes('unique');
-        if (dup) {
-          setSubmitError('A shop profile may already exist for this account. Try signing in.');
-        } else {
-          throw ownerError;
-        }
-        await supabase.auth.signOut();
-        return;
-      }
+      // shop_owners row is created by admin when approving the registration
 
       await supabase.auth.signOut();
       registrationComplete.current = true;
