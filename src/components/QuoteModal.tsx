@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, Car, Palette, Disc3, PanelTop, AudioLines } from 'lucide-react';
+import { X, CheckCircle, Car, Palette, Disc3, PanelTop, AudioLines, Mail, AlertCircle } from 'lucide-react';
 import type { Shop, BuildConfig } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -25,6 +25,14 @@ interface FormErrors {
   email?: string;
   phone?: string;
   cityState?: string;
+}
+
+interface VerificationState {
+  code: string;
+  sent: boolean;
+  verified: boolean;
+  error: string;
+  resendCooldown: number;
 }
 
 const CONTACT_TIMES = ['Morning', 'Afternoon', 'Evening', 'Anytime'];
@@ -107,12 +115,20 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [verification, setVerification] = useState<VerificationState>({
+    code: '',
+    sent: false,
+    verified: false,
+    error: '',
+    resendCooldown: 0,
+  });
 
   const resetForm = useCallback(() => {
     setForm({ fullName: '', email: '', phone: '', cityState: '', contactTime: 'Anytime', notes: '' });
     setErrors({});
     setSubmitted(false);
     setSubmitting(false);
+    setVerification({ code: '', sent: false, verified: false, error: '', resendCooldown: 0 });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -140,11 +156,56 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
     if (Object.keys(validationErrors).length > 0) return;
     if (!shop) return;
 
-    setSubmitting(true);
+    if (!verification.sent) {
+      // Send verification email first
+      setSubmitting(true);
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: form.email.trim(),
+          options: {
+            data: {
+              quote_request: true,
+              shop_name: shop.name,
+              customer_name: form.fullName.trim(),
+            },
+          },
+        });
+        if (error) throw error;
+        setVerification(prev => ({ ...prev, sent: true, error: '' }));
+        setSubmitting(false);
+      } catch (error) {
+        setVerification(prev => ({ ...prev, error: 'Failed to send verification email. Please try again.' }));
+        setSubmitting(false);
+      }
+    } else if (!verification.verified) {
+      // Verify the code
+      if (!verification.code.trim()) {
+        setVerification(prev => ({ ...prev, error: 'Please enter the verification code.' }));
+        return;
+      }
+      setSubmitting(true);
+      try {
+        const { error } = await supabase.auth.verifyOtp({
+          email: form.email.trim(),
+          token: verification.code.trim(),
+          type: 'email',
+        });
+        if (error) throw error;
+        setVerification(prev => ({ ...prev, verified: true, error: '' }));
+        setSubmitting(false);
+        // Now submit the quote
+        await submitQuote();
+      } catch (error) {
+        setVerification(prev => ({ ...prev, error: 'Invalid verification code. Please try again.' }));
+        setSubmitting(false);
+      }
+    }
+  }, [form, validate, shop, buildConfig, verification]);
 
+  const submitQuote = useCallback(async () => {
     const leadData = {
-      shop_name: shop.name,
-      shop_location: `${shop.city}, ${shop.state}`,
+      shop_name: shop!.name,
+      shop_location: `${shop!.city}, ${shop!.state}`,
       customer_name: form.fullName.trim(),
       customer_email: form.email.trim(),
       customer_phone: form.phone.trim(),
@@ -159,8 +220,8 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
 
     const localLead = {
       id: Date.now(),
-      shopName: shop.name,
-      shopLocation: `${shop.city}, ${shop.state}`,
+      shopName: shop!.name,
+      shopLocation: `${shop!.city}, ${shop!.state}`,
       customerName: form.fullName.trim(),
       customerEmail: form.email.trim(),
       customerPhone: form.phone.trim(),
@@ -176,9 +237,39 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
     existing.push(localLead);
     localStorage.setItem('quoteLeads', JSON.stringify(existing));
 
-    setSubmitting(false);
     setSubmitted(true);
-  }, [form, validate, shop, buildConfig]);
+  }, [form, shop, buildConfig]);
+
+  const resendVerification = useCallback(async () => {
+    if (verification.resendCooldown > 0) return;
+    
+    setVerification(prev => ({ ...prev, error: '', resendCooldown: 60 }));
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: form.email.trim(),
+        options: {
+          data: {
+            quote_request: true,
+            shop_name: shop!.name,
+            customer_name: form.fullName.trim(),
+          },
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      setVerification(prev => ({ ...prev, error: 'Failed to resend verification email.' }));
+    }
+  }, [form.email, shop, verification.resendCooldown]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (verification.resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setVerification(prev => ({ ...prev, resendCooldown: prev.resendCooldown - 1 }));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [verification.resendCooldown]);
 
   const updateField = useCallback((field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -190,6 +281,10 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
       });
     }
   }, [errors]);
+
+  const updateVerificationCode = useCallback((code: string) => {
+    setVerification(prev => ({ ...prev, code, error: '' }));
+  }, []);
 
   const shopName = shop?.name ?? '';
   const shopLocation = shop ? `${shop.city}, ${shop.state}` : '';
@@ -353,12 +448,59 @@ export default function QuoteModal({ isOpen, onClose, shop, buildConfig }: Quote
                       />
                     </div>
 
+                    {verification.sent && !verification.verified && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-4 p-4 bg-[#FF4500]/5 border border-[#FF4500]/20 rounded-xl"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-[#FF4500]" />
+                          <span className="text-sm font-medium text-white">Verify Your Email</span>
+                        </div>
+                        <p className="text-xs text-white/60">
+                          We've sent a verification code to <strong className="text-white">{form.email}</strong>.
+                          Please check your inbox and enter the code below.
+                        </p>
+                        <div>
+                          <input
+                            type="text"
+                            value={verification.code}
+                            onChange={(e) => updateVerificationCode(e.target.value)}
+                            className={`${INPUT_NORMAL} text-center font-mono tracking-widest`}
+                            placeholder="000000"
+                            maxLength={6}
+                          />
+                          {verification.error && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <AlertCircle className="w-3 h-3 text-red-400" />
+                              <p className="text-[10px] text-red-400">{verification.error}</p>
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={resendVerification}
+                          disabled={verification.resendCooldown > 0}
+                          className="text-xs text-[#FF4500] hover:text-[#FF5722] disabled:text-white/30 disabled:cursor-not-allowed"
+                        >
+                          {verification.resendCooldown > 0 
+                            ? `Resend in ${verification.resendCooldown}s` 
+                            : 'Resend Code'
+                          }
+                        </button>
+                      </motion.div>
+                    )}
+
                     <button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || (verification.sent && !verification.verified && !verification.code.trim())}
                       className="w-full py-3.5 rounded-xl bg-[#FF4500] text-white text-sm font-bold uppercase tracking-wider hover:bg-[#FF5722] active:scale-[0.98] transition-all duration-200 shadow-lg shadow-[#FF4500]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {submitting ? 'Sending...' : 'Send Quote Request'}
+                      {submitting ? 'Sending...' : 
+                       !verification.sent ? 'Send Quote Request' :
+                       !verification.verified ? 'Verify & Send' : 'Send Quote Request'}
                     </button>
 
                     <p className="text-[10px] text-white/20 text-center">
