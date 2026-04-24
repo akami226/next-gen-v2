@@ -469,6 +469,7 @@ function SceneSetup() {
 
 function StudioEnvironment({ isMobile }: { isMobile?: boolean }) {
   const resolution = isMobile ? 256 : 512;
+
   return (
     <Environment
       files="/studio_small_03_1k.hdr"

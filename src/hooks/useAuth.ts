@@ -20,6 +20,7 @@ interface AuthState {
   loading: boolean;
   isShopOwner: boolean;
   shopOwnerData: ShopOwnerData | null;
+  sessionWarning: boolean;
 }
 
 export function useAuth() {
@@ -29,9 +30,19 @@ export function useAuth() {
     loading: true,
     isShopOwner: false,
     shopOwnerData: null,
+    sessionWarning: false,
   });
 
   const authRequestId = useRef(0);
+  const sessionWarningTimer = useRef<NodeJS.Timeout>();
+
+  const clearSessionWarning = useCallback(() => {
+    if (sessionWarningTimer.current) {
+      clearTimeout(sessionWarningTimer.current);
+      sessionWarningTimer.current = undefined;
+    }
+    setState(prev => ({ ...prev, sessionWarning: false }));
+  }, []);
 
   const fetchShopOwner = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -47,7 +58,8 @@ export function useAuth() {
 
     const applySignedOut = () => {
       if (cancelled) return;
-      setState({ user: null, session: null, loading: false, isShopOwner: false, shopOwnerData: null });
+      clearSessionWarning();
+      setState({ user: null, session: null, loading: false, isShopOwner: false, shopOwnerData: null, sessionWarning: false });
     };
 
     const applySignedIn = async (session: Session, requestId: number) => {
@@ -59,7 +71,21 @@ export function useAuth() {
         loading: false,
         isShopOwner: !!shopData,
         shopOwnerData: shopData,
+        sessionWarning: false,
       });
+
+      // Set up session expiry warning (5 minutes before expiry)
+      if (session.expires_at) {
+        const expiryTime = session.expires_at * 1000;
+        const warningTime = expiryTime - (5 * 60 * 1000); // 5 minutes before
+        const now = Date.now();
+
+        if (warningTime > now) {
+          sessionWarningTimer.current = setTimeout(() => {
+            setState(prev => ({ ...prev, sessionWarning: true }));
+          }, warningTime - now);
+        }
+      }
     };
 
     const handleSession = (session: Session | null) => {
@@ -99,22 +125,18 @@ export function useAuth() {
     });
     if (error) throw error;
 
+    // Profile creation is best-effort — no active session exists while email is
+    // unconfirmed so RLS may reject the insert. The row is created/updated on
+    // first successful sign-in via the onAuthStateChange handler instead.
     if (data.user) {
-      const { error: profileError } = await supabase.from('user_profiles').upsert(
-        {
-          id: data.user.id,
-          display_name: name,
-          email,
-        },
+      await supabase.from('user_profiles').upsert(
+        { id: data.user.id, display_name: name, email },
         { onConflict: 'id' }
-      );
-      if (profileError && !String(profileError.message).toLowerCase().includes('duplicate')) {
-        throw profileError;
-      }
+      ).then(() => null, () => null);
     }
 
     // Sign out so the unverified session doesn't persist
-    await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(() => null);
 
     return data;
   }, []);
@@ -122,20 +144,26 @@ export function useAuth() {
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      // Generic error messages to prevent account enumeration
+      const genericError = 'Invalid email or password. Please check your credentials and try again.';
       if (error.message.toLowerCase().includes('email not confirmed')) {
         throw new Error('Please verify your email before signing in. Check your inbox for a confirmation link.');
       }
       if (error.message.toLowerCase().includes('invalid login credentials')) {
-        throw new Error('Incorrect email or password. Please try again.');
+        throw new Error(genericError);
       }
-      throw error;
+      if (error.message.toLowerCase().includes('user not found')) {
+        throw new Error(genericError);
+      }
+      throw new Error(genericError);
     }
     return data;
   }, []);
 
   const signOut = useCallback(async () => {
+    clearSessionWarning();
     await supabase.auth.signOut();
-  }, []);
+  }, [clearSessionWarning]);
 
   const resetPassword = useCallback(async (email: string) => {
     const redirectTo = `${window.location.origin}${window.location.pathname}#/auth`;
